@@ -30,11 +30,10 @@ jobs:
 
       - name: Fetch iPhoneOS SDK
         run: |
-          curl -fL -o /tmp/sdk.tar.xz \
-            https://github.com/theos/sdks/raw/master/iPhoneOS16.5.sdk.tar.xz
-          sudo mkdir -p /opt/sdk
-          sudo tar -xf /tmp/sdk.tar.xz -C /opt/sdk
-          echo "SDKROOT=/opt/sdk/iPhoneOS16.5.sdk" >> "$GITHUB_ENV"
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/theos/sdks.git /tmp/sdks
+          git -C /tmp/sdks sparse-checkout set iPhoneOS16.5.sdk
+          echo "SDKROOT=/tmp/sdks/iPhoneOS16.5.sdk" >> "$GITHUB_ENV"
 
       - name: Build tweak
         run: |
