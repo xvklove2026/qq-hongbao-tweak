@@ -16,6 +16,12 @@ if [ -z "$SYSROOT" ] && command -v xcrun >/dev/null 2>&1; then
     SYSROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
 fi
 
+# Linux 交叉编译用 lld 的 Mach-O 模式
+LD_FLAGS=""
+if [ "$(uname -s)" = "Linux" ]; then
+    LD_FLAGS="-fuse-ld=lld"
+fi
+
 stage="$(mktemp -d "${TMPDIR:?}stage.XXXXXX")"
 work="$(mktemp -d "${TMPDIR:?}work.XXXXXX")"
 trap 'rm -rf -- "${stage:?}" "${work:?}"' EXIT
@@ -32,10 +38,10 @@ mkdir -p "${APELIN_PACKAGE_DIR:?}"
 run_clang() {
     arch="$1"; out="$2"; shift 2
     if [ -n "$SYSROOT" ]; then
-        clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" "$@" \
+        clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS "$@" \
             -dynamiclib -framework Foundation -o "$out"
     else
-        clang -target "$arch-apple-ios16.0" "$@" \
+        clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" \
             -dynamiclib -framework Foundation -o "$out"
     fi
 }
