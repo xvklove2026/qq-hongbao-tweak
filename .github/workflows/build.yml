@@ -123,7 +123,7 @@ jobs:
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"
           git checkout -B "ci-log-${{ matrix.bootstrap }}"
-          tail -n 400 /tmp/build.log > ci-log.txt || true
+          tail -c 20000 /tmp/build.log > ci-log.txt || true
           git add -f ci-log.txt
           git commit -m "ci log ${{ matrix.bootstrap }}" || true
           git push -f origin "ci-log-${{ matrix.bootstrap }}"
