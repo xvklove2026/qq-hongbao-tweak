@@ -45,6 +45,7 @@ jobs:
           {
             git clone --depth 1 https://github.com/swiftlang/swift-corelibs-libdispatch.git /tmp/libdispatch
             cmake -S /tmp/libdispatch -B /tmp/libdispatch/build \
+              -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
               -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
               -DINSTALL_PRIVATE_HEADERS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
             cmake --build /tmp/libdispatch/build -j"$(nproc)"
