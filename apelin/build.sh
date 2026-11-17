@@ -49,13 +49,10 @@ run_clang() {
 }
 
 if [ "$APELIN_BOOTSTRAP" = "roothide" ]; then
-    run_clang arm64e "${work:?}/$NAME.dylib" $COMMON -DAPELIN_BOOTSTRAP_ROOTHIDE=1 $SOURCES
+    run_clang arm64 "${work:?}/$NAME.dylib" $COMMON -DAPELIN_BOOTSTRAP_ROOTHIDE=1 $SOURCES
 else
     COMMON="$COMMON -DAPELIN_BOOTSTRAP_ROOTLESS=1"
-    run_clang arm64 "${work:?}/$NAME.arm64.dylib" $COMMON $SOURCES
-    run_clang arm64e "${work:?}/$NAME.arm64e.dylib" $COMMON $SOURCES
-    lipo -create "${work:?}/$NAME.arm64.dylib" "${work:?}/$NAME.arm64e.dylib" \
-        -output "${work:?}/$NAME.dylib"
+    run_clang arm64 "${work:?}/$NAME.dylib" $COMMON $SOURCES
 fi
 
 ldid -S "${work:?}/$NAME.dylib"
