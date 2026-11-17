@@ -35,8 +35,9 @@ mkdir -p "${APELIN_PACKAGE_DIR:?}"
 run_clang() {
     arch="$1"; out="$2"; shift 2
     if [ -n "$SYSROOT" ]; then
-        clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS "$@" \
-            -dynamiclib -framework Foundation -o "$out"
+        clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
+            -F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib" \
+            "$@" -dynamiclib -framework Foundation -o "$out"
     else
         clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" \
             -dynamiclib -framework Foundation -o "$out"
