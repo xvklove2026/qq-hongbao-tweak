@@ -27,13 +27,16 @@ FEAT_LRCPC，这颗 A11 没有；`apelin_toolchain_list` 里全部标 unavailabl
 sparse 检出 theos 的 iPhoneOS16.5.sdk → 跑 `apelin/build.sh` 出两个 deb。
 失败时把 `/tmp/build.log` 推到 `ci-log-<bootstrap>` 分支，可从 raw 读。
 
-2026-11-18 状态：源码**编译通过**（只剩警告），卡在 Linux 端 Mach-O 链接：
-- `ld64.lld` 报 `INVALID relocation has width 8 bytes ... __DATA,__cfstring`
-  （lld 对 clang 21 生成的 ObjC 字符串段重定位不兼容）。
-- 改自编 cctools-port 的 ld64，configure 卡在缺 `libdispatch`
-  （Ubuntu 26.04 没有这个包，来自 Swift 工具链）。
-- 本账号拿不到 macOS runner：`macos-14` 报 configuration not supported，
-  `macos-13` 一直排队没分到。
+2026-11-18 状态：源码编译通过，链接阶段还在啃：
+- `ld64.lld` 对 clang 21 生成的 ObjC 字符串段报 `INVALID relocation has width 8 bytes`。
+- 改为在 CI 里自编 cctools-port 的 ld64（需要先编 swift-corelibs-libdispatch，
+  用 `-DCMAKE_C_COMPILER=clang`），已装成 `/usr/local/bin/aarch64-apple-darwin-ld`，
+  通过 `APELIN_LD_FLAGS="--ld-path=..."` 传给 clang。
+- 当前报 `ld: framework not found Foundation`；`apelin/build.sh` 已补
+  `-F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib"`，尚未确认生效。
+- 本账号拿不到 macOS runner：`macos-14` 报 configuration not supported，`macos-13` 排不到。
+
+CI 失败时会把 `/tmp/build.log` 尾部 20KB 推到 `ci-log-<bootstrap>` 分支。
 
 可行出路：在 Mac 上用 Xcode 的 clang 编译（最稳），或继续把 cctools 的
 libdispatch 依赖处理掉。
