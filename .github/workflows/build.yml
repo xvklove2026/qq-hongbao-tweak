@@ -38,28 +38,20 @@ jobs:
           make -C /tmp/ldid -j"$(nproc)"
           sudo install -m755 /tmp/ldid/ldid /usr/local/bin/ldid
 
-      - name: Provide libdispatch
+      - name: Build libdispatch
         shell: bash
         run: |
           set -o pipefail
           {
-            DISPATCH_SO=$(find /usr /opt -name 'libdispatch.so*' 2>/dev/null | head -1 || true)
-            if [ -n "$DISPATCH_SO" ]; then
-              echo "found prebuilt: $DISPATCH_SO"
-              sudo mkdir -p /usr/local/lib
-              sudo cp -a "$DISPATCH_SO" /usr/local/lib/ || true
-              INC=$(dirname "$(find /usr /opt -name 'dispatch.h' 2>/dev/null | head -1 || echo /nonexistent)")
-              if [ -d "$INC" ]; then sudo mkdir -p /usr/local/include; sudo cp -a "$INC" /usr/local/include/dispatch || true; fi
-            else
-              echo "building swift-corelibs-libdispatch"
-              git clone --depth 1 https://github.com/swiftlang/swift-corelibs-libdispatch.git /tmp/libdispatch
-              cmake -S /tmp/libdispatch -B /tmp/libdispatch/build \
-                -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
-              cmake --build /tmp/libdispatch/build -j"$(nproc)"
-              sudo cmake --install /tmp/libdispatch/build
-            fi
+            git clone --depth 1 https://github.com/swiftlang/swift-corelibs-libdispatch.git /tmp/libdispatch
+            cmake -S /tmp/libdispatch -B /tmp/libdispatch/build \
+              -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+              -DINSTALL_PRIVATE_HEADERS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
+            cmake --build /tmp/libdispatch/build -j"$(nproc)"
+            sudo cmake --install /tmp/libdispatch/build
             sudo ldconfig
-            ldconfig -p | grep -i dispatch || true
+            ls /usr/local/include/dispatch 2>/dev/null | head -5
+            ls /usr/local/include/os 2>/dev/null | head -5
           } 2>&1 | tee -a /tmp/build.log
 
       - name: Build ld64 (cctools-port)
