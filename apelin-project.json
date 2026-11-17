@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "projectID": "78cbce51-7f31-4adf-8813-fe91eb19beed",
+  "kind": "workspace",
+  "buildSystem": "external",
+  "displayName": "QQ开包",
+  "autoName": false,
+  "external": {
+    "script": "apelin/build.sh",
+    "interpreter": "sh"
+  }
+}

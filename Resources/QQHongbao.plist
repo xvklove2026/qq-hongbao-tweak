@@ -1,0 +1,9 @@
+{
+    Filter = {
+        Bundles = (
+            "com.tencent.mqq",
+            "com.tencent.mqq.QQWallet",
+            "com.tencent.qq"
+        );
+    };
+}

@@ -1,0 +1,50 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deb:
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        bootstrap: [roothide, rootless]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dpkg and libplist
+        run: brew install dpkg libplist
+
+      - name: Build ldid
+        run: |
+          git clone --depth 1 https://github.com/ProcursusTeam/ldid.git /tmp/ldid
+          sudo make -C /tmp/ldid -j"$(sysctl -n hw.ncpu)" install
+
+      - name: Build tweak
+        run: |
+          chmod +x apelin/build.sh
+          if [ "${{ matrix.bootstrap }}" = "roothide" ]; then
+            PREFIX=""
+            ARCH=iphoneos-arm64e
+          else
+            PREFIX="/var/jb"
+            ARCH=iphoneos-arm64
+          fi
+          mkdir -p out
+          export APELIN_PROJECT_ROOT="$PWD"
+          export APELIN_BOOTSTRAP="${{ matrix.bootstrap }}"
+          export APELIN_ARCHITECTURE="$ARCH"
+          export APELIN_PREFIX="$PREFIX"
+          export APELIN_BUILD_ID="${GITHUB_SHA::8}"
+          export APELIN_PACKAGE_DIR="$PWD/out"
+          export TMPDIR="$(mktemp -d)"
+          ./apelin/build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qqhongbao-${{ matrix.bootstrap }}
+          path: out/*.deb
+          if-no-files-found: error

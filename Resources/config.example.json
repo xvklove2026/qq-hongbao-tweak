@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "diagnose": true,
+  "grabOwnPackets": true,
+  "skipExclusive": true,
+  "skipTitleKeywords": ["专属", "测试"],
+  "grabKeywords": [],
+  "delayMs": 0,
+  "delayMaxMs": 0,
+  "selfUin": "",
+  "exclusiveTypes": [],
+  "grabHooks": []
+}
