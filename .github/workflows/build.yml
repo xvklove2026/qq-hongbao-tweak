@@ -19,12 +19,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install tools
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm lld libplist-dev libssl-dev zlib1g-dev \
-            libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl
-          LIPO=$(ls /usr/bin/llvm-lipo* 2>/dev/null | head -1 || true)
-          if [ -n "$LIPO" ]; then sudo ln -sf "$LIPO" /usr/local/bin/lipo; fi
+          set -o pipefail
+          : > /tmp/build.log
+          {
+            sudo apt-get update
+            sudo apt-get install -y clang llvm lld libplist-dev libssl-dev zlib1g-dev \
+              libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl
+            LIPO=$(ls /usr/bin/llvm-lipo* 2>/dev/null | head -1 || true)
+            if [ -n "$LIPO" ]; then sudo ln -sf "$LIPO" /usr/local/bin/lipo; fi
+          } 2>&1 | tee -a /tmp/build.log
 
       - name: Build ldid
         run: |
@@ -33,14 +38,19 @@ jobs:
           sudo install -m755 /tmp/ldid/ldid /usr/local/bin/ldid
 
       - name: Build ld64 (cctools-port)
+        shell: bash
         run: |
-          git clone --depth 1 https://github.com/tpoechtrager/cctools-port.git /tmp/ctp
-          cd /tmp/ctp/cctools
-          LLVMCONFIG=$(command -v llvm-config-18 || command -v llvm-config-19 || command -v llvm-config)
-          ./configure --prefix=/usr/local --with-llvm-config="$LLVMCONFIG"
-          make -j"$(nproc)"
-          sudo make install
-          ls -l /usr/local/bin/ld64* || ls -l /usr/local/bin | head -50
+          set -o pipefail
+          {
+            git clone --depth 1 https://github.com/tpoechtrager/cctools-port.git /tmp/ctp
+            cd /tmp/ctp/cctools
+            LLVMCONFIG=$(command -v llvm-config-18 || command -v llvm-config-19 || command -v llvm-config)
+            echo "llvm-config: $LLVMCONFIG"
+            ./configure --prefix=/usr/local --target=aarch64-apple-darwin --with-llvm-config="$LLVMCONFIG"
+            make -j"$(nproc)"
+            sudo make install
+            ls -l /usr/local/bin | head -30
+          } 2>&1 | tee -a /tmp/build.log
 
       - name: Fetch iPhoneOS SDK
         run: |
@@ -70,7 +80,7 @@ jobs:
           export APELIN_PACKAGE_DIR="$PWD/out"
           export APELIN_LD_FLAGS="--ld-path=/usr/local/bin/ld64"
           export TMPDIR="$(mktemp -d)"
-          ./apelin/build.sh 2>&1 | tee build.log
+          ./apelin/build.sh 2>&1 | tee -a /tmp/build.log
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -86,7 +96,7 @@ jobs:
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"
           git checkout -B "ci-log-${{ matrix.bootstrap }}"
-          tail -n 400 build.log > ci-log.txt || true
+          tail -n 400 /tmp/build.log > ci-log.txt || true
           git add -f ci-log.txt
           git commit -m "ci log ${{ matrix.bootstrap }}" || true
           git push -f origin "ci-log-${{ matrix.bootstrap }}"
