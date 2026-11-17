@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   deb:
     runs-on: ubuntu-latest
@@ -36,7 +39,9 @@ jobs:
           echo "SDKROOT=/tmp/sdks/iPhoneOS16.5.sdk" >> "$GITHUB_ENV"
 
       - name: Build tweak
+        shell: bash
         run: |
+          set -o pipefail
           chmod +x apelin/build.sh
           if [ "${{ matrix.bootstrap }}" = "roothide" ]; then
             PREFIX=""
@@ -53,10 +58,24 @@ jobs:
           export APELIN_BUILD_ID="${GITHUB_SHA::8}"
           export APELIN_PACKAGE_DIR="$PWD/out"
           export TMPDIR="$(mktemp -d)"
-          ./apelin/build.sh
+          ./apelin/build.sh 2>&1 | tee build.log
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: qqhongbao-${{ matrix.bootstrap }}
           path: out/*.deb
           if-no-files-found: error
+
+      - name: Publish build log
+        if: failure()
+        shell: bash
+        run: |
+          set -x
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git checkout -B "ci-log-${{ matrix.bootstrap }}"
+          tail -n 400 build.log > ci-log.txt || true
+          git add -f ci-log.txt
+          git commit -m "ci log ${{ matrix.bootstrap }}" || true
+          git push -f origin "ci-log-${{ matrix.bootstrap }}"
