@@ -26,7 +26,8 @@ jobs:
           {
             sudo apt-get update
             sudo apt-get install -y clang llvm lld libplist-dev libssl-dev zlib1g-dev \
-              libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl libblocksruntime-dev
+              libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl libblocksruntime-dev \
+              libbsd-dev libnuma-dev cmake
             LIPO=$(ls /usr/bin/llvm-lipo* 2>/dev/null | head -1 || true)
             if [ -n "$LIPO" ]; then sudo ln -sf "$LIPO" /usr/local/bin/lipo; fi
           } 2>&1 | tee -a /tmp/build.log
@@ -37,6 +38,30 @@ jobs:
           make -C /tmp/ldid -j"$(nproc)"
           sudo install -m755 /tmp/ldid/ldid /usr/local/bin/ldid
 
+      - name: Provide libdispatch
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            DISPATCH_SO=$(find /usr /opt -name 'libdispatch.so*' 2>/dev/null | head -1 || true)
+            if [ -n "$DISPATCH_SO" ]; then
+              echo "found prebuilt: $DISPATCH_SO"
+              sudo mkdir -p /usr/local/lib
+              sudo cp -a "$DISPATCH_SO" /usr/local/lib/ || true
+              INC=$(dirname "$(find /usr /opt -name 'dispatch.h' 2>/dev/null | head -1 || echo /nonexistent)")
+              if [ -d "$INC" ]; then sudo mkdir -p /usr/local/include; sudo cp -a "$INC" /usr/local/include/dispatch || true; fi
+            else
+              echo "building swift-corelibs-libdispatch"
+              git clone --depth 1 https://github.com/swiftlang/swift-corelibs-libdispatch.git /tmp/libdispatch
+              cmake -S /tmp/libdispatch -B /tmp/libdispatch/build \
+                -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+              cmake --build /tmp/libdispatch/build -j"$(nproc)"
+              sudo cmake --install /tmp/libdispatch/build
+            fi
+            sudo ldconfig
+            ldconfig -p | grep -i dispatch || true
+          } 2>&1 | tee -a /tmp/build.log
+
       - name: Build ld64 (cctools-port)
         shell: bash
         run: |
@@ -46,7 +71,9 @@ jobs:
             cd /tmp/ctp/cctools
             LLVMCONFIG=$(command -v llvm-config-18 || command -v llvm-config-19 || command -v llvm-config)
             echo "llvm-config: $LLVMCONFIG"
-            ./configure --prefix=/usr/local --target=aarch64-apple-darwin --with-llvm-config="$LLVMCONFIG"
+            CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
+              ./configure --prefix=/usr/local --target=aarch64-apple-darwin \
+                --with-llvm-config="$LLVMCONFIG"
             make -j"$(nproc)"
             sudo make install
             ls -l /usr/local/bin | head -30
