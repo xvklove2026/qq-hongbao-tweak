@@ -11,7 +11,6 @@ permissions:
 jobs:
   deb:
     runs-on: ubuntu-latest
-    container: theos/theos:latest
     strategy:
       fail-fast: false
       matrix:
@@ -19,18 +18,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare tools
+      - name: Install tools
         run: |
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y git curl xz-utils dpkg-dev llvm lld ca-certificates
-          if ! command -v ldid >/dev/null 2>&1; then
-            git clone --depth 1 https://github.com/ProcursusTeam/ldid.git /tmp/ldid
-            make -C /tmp/ldid -j"$(nproc)"
-            install -m755 /tmp/ldid/ldid /usr/local/bin/ldid
-          fi
-          ldid 2>&1 | head -2 || true
-          which clang ld64 ld dpkg-deb ldid lipo || true
+          sudo apt-get update
+          sudo apt-get install -y clang llvm lld libplist-dev libssl-dev zlib1g-dev \
+            libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl
+          LIPO=$(ls /usr/bin/llvm-lipo* 2>/dev/null | head -1 || true)
+          if [ -n "$LIPO" ]; then sudo ln -sf "$LIPO" /usr/local/bin/lipo; fi
+
+      - name: Build ldid
+        run: |
+          git clone --depth 1 https://github.com/ProcursusTeam/ldid.git /tmp/ldid
+          make -C /tmp/ldid -j"$(nproc)"
+          sudo install -m755 /tmp/ldid/ldid /usr/local/bin/ldid
+
+      - name: Build ld64 (cctools-port)
+        run: |
+          git clone --depth 1 https://github.com/tpoechtrager/cctools-port.git /tmp/ctp
+          cd /tmp/ctp/cctools
+          LLVMCONFIG=$(command -v llvm-config-18 || command -v llvm-config-19 || command -v llvm-config)
+          ./configure --prefix=/usr/local --with-llvm-config="$LLVMCONFIG"
+          make -j"$(nproc)"
+          sudo make install
+          ls -l /usr/local/bin/ld64* || ls -l /usr/local/bin | head -50
 
       - name: Fetch iPhoneOS SDK
         run: |
@@ -58,6 +68,7 @@ jobs:
           export APELIN_PREFIX="$PREFIX"
           export APELIN_BUILD_ID="${GITHUB_SHA::8}"
           export APELIN_PACKAGE_DIR="$PWD/out"
+          export APELIN_LD_FLAGS="--ld-path=/usr/local/bin/ld64"
           export TMPDIR="$(mktemp -d)"
           ./apelin/build.sh 2>&1 | tee build.log
 
@@ -72,7 +83,6 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"
           git checkout -B "ci-log-${{ matrix.bootstrap }}"
