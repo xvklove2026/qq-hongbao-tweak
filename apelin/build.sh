@@ -16,11 +16,8 @@ if [ -z "$SYSROOT" ] && command -v xcrun >/dev/null 2>&1; then
     SYSROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
 fi
 
-# Linux 交叉编译用 lld 的 Mach-O 模式
-LD_FLAGS=""
-if [ "$(uname -s)" = "Linux" ]; then
-    LD_FLAGS="-fuse-ld=lld"
-fi
+# Linux 上用哪个链接器由外部决定：Theos 镜像里自带 ld64
+LD_FLAGS="${APELIN_LD_FLAGS:-}"
 
 stage="$(mktemp -d "${TMPDIR:?}stage.XXXXXX")"
 work="$(mktemp -d "${TMPDIR:?}work.XXXXXX")"
@@ -30,8 +27,6 @@ cd "${APELIN_PROJECT_ROOT:?}"
 
 SOURCES="Sources/QQHB.m Sources/QQHBConfig.m Sources/QQHBStats.m"
 COMMON="-fobjc-arc -Os -Wall -Wno-unused-parameter -fvisibility=hidden -fmodules -I Sources"
-# ld64.lld 不支持常量 CFString 段的重定位，改为运行期构造
-COMMON="$COMMON -fno-constant-cfstrings"
 COMMON="$COMMON -DAPELIN_BUILD_ID=\"\\\"$APELIN_BUILD_ID\\\"\""
 COMMON="$COMMON -DQQHB_SUBSYSTEM=\"\\\"$PACKAGE\\\"\""
 
