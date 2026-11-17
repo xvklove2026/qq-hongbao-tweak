@@ -20,8 +20,23 @@ APELIN_BOOTSTRAP / APELIN_BUILD_ID / APELIN_PACKAGE_DIR`，不要给这些变量
 
 **本机（iPhone10,3，iOS 16.7.16）无法构建**：Apelin 列出的每个 CLT 都要求
 FEAT_LRCPC，这颗 A11 没有；`apelin_toolchain_list` 里全部标 unavailable，
-`clang` 不存在，`apelin/build.sh` 第 28 行以 127 退出。要出包必须在能装工具链的
-设备上构建，或在 Mac 上用同样的 clang 参数编译。
+`clang` 不存在，`apelin/build.sh` 第 28 行以 127 退出。
+
+## GitHub Actions（仓库 xvklove2026/qq-hongbao-tweak）
+`.github/workflows/build.yml`：ubuntu-latest → 装 clang/llvm → 编 ldid →
+sparse 检出 theos 的 iPhoneOS16.5.sdk → 跑 `apelin/build.sh` 出两个 deb。
+失败时把 `/tmp/build.log` 推到 `ci-log-<bootstrap>` 分支，可从 raw 读。
+
+2026-11-18 状态：源码**编译通过**（只剩警告），卡在 Linux 端 Mach-O 链接：
+- `ld64.lld` 报 `INVALID relocation has width 8 bytes ... __DATA,__cfstring`
+  （lld 对 clang 21 生成的 ObjC 字符串段重定位不兼容）。
+- 改自编 cctools-port 的 ld64，configure 卡在缺 `libdispatch`
+  （Ubuntu 26.04 没有这个包，来自 Swift 工具链）。
+- 本账号拿不到 macOS runner：`macos-14` 报 configuration not supported，
+  `macos-13` 一直排队没分到。
+
+可行出路：在 Mac 上用 Xcode 的 clang 编译（最稳），或继续把 cctools 的
+libdispatch 依赖处理掉。
 
 ## 运行期
 - 包 ID `com.yg.qqhongbao`，dylib `QQHongbao.dylib`。
