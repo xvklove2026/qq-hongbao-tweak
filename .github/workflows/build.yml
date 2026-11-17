@@ -26,7 +26,8 @@ jobs:
           {
             sudo apt-get update
             sudo apt-get install -y clang llvm lld libplist-dev libssl-dev zlib1g-dev \
-              libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl
+              libxml2-dev flex bison texinfo dpkg-dev llvm-dev curl libblocksruntime-dev \
+              libdispatch-dev
             LIPO=$(ls /usr/bin/llvm-lipo* 2>/dev/null | head -1 || true)
             if [ -n "$LIPO" ]; then sudo ln -sf "$LIPO" /usr/local/bin/lipo; fi
           } 2>&1 | tee -a /tmp/build.log
