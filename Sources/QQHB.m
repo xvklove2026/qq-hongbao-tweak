@@ -769,22 +769,17 @@ void QQHBStart(void) {
         QQHBResolveHookAPI();
         [QQHBConfig shared];
 
-        __block void (^attempt)(int);
-        attempt = ^(int left) {
-            if (left <= 0) return;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                QQHBInstallConfiguredHooks();
-                attempt(left - 1);
-            });
-        };
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            [QQHBConfig shared];
+        /* 立刻装一批，然后每 3 秒重试一次，持续两分钟（QQ 的类经常是懒加载的） */
+        dispatch_async(dispatch_get_main_queue(), ^{
             if ([[QQHBConfig shared] diagnose]) QQHBDiagnoseScan();
             QQHBInstallConfiguredHooks();
-            attempt(12);
         });
+        for (int i = 1; i <= 40; i++) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(i * 3 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                QQHBInstallConfiguredHooks();
+            });
+        }
     });
 }
 
