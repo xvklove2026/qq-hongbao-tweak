@@ -834,6 +834,33 @@ static void QQHBDiagnoseScan(void) {
         if (ms) free(ms);
     }
 
+    /* 第四遍：方法名带 hb / redpack / envelope 的，找红包卡片点击入口 */
+    [report appendString:@"\n=== 选择器含 hb/redpack/envelope 的方法 ===\n"];
+    NSArray *uiHints = @[@"hb", @"redpack", @"envelope", @"hongbao", @"luckymoney"];
+    unsigned int count2 = 0;
+    Class *classes2 = objc_copyClassList(&count2);
+    NSUInteger uiCount = 0;
+    for (unsigned int i = 0; i < count2 && uiCount < 500; i++) {
+        const char *cname = class_getName(classes2[i]);
+        if (!cname) continue;
+        NSString *clsName = [NSString stringWithUTF8String:cname];
+        unsigned int mcount = 0;
+        Method *methods = class_copyMethodList(classes[i], &mcount);
+        for (unsigned int j = 0; j < mcount && uiCount < 500; j++) {
+            NSString *selName = NSStringFromSelector(method_getName(methods[j]));
+            NSString *lower = selName.lowercaseString;
+            BOOL hit = NO;
+            for (NSString *h in uiHints) {
+                if ([lower rangeOfString:h].location != NSNotFound) { hit = YES; break; }
+            }
+            if (!hit) continue;
+            [report appendFormat:@"%@ %@\n", clsName, selName];
+            uiCount++;
+        }
+        if (methods) free(methods);
+    }
+    if (classes2) free(classes2);
+
     NSString *path = [QQHBSupportDir() stringByAppendingPathComponent:@"diag.txt"];
     [report writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     QQHBLog(@"[诊断] 扫描完成，候选类 %lu 个，grab 方法 %lu 个，报告写在 %@",
