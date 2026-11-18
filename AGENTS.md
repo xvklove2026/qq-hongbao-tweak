@@ -57,3 +57,14 @@ libdispatch 依赖处理掉。
 `diagnose: true` 时会把所有名字含 RedPack/Hongbao/Envelope 的类及其
 grab/open/receive 候选方法与类型编码打进日志，看到日志后再把它们填进
 `config.json` 的 `grabHooks`，引擎才真正开始拦截和抢包。
+
+## 踩过的坑（roothide 注入）
+- 瘦 `arm64e` 的 dylib（`cffaedfe`，cpusubtype 0x80000002）ElleKit **不会加载**，
+  日志里连错误都没有。可加载的 tweak（QQRecallGuard、QQNotiAvatar）都是
+  fat 二进制（`cafebabe`，arm64 + arm64e 两个 slice）。所以 `apelin/build.sh`
+  对 roothide 也必须 lipo 成 fat。
+- 过滤 plist 用 XML 格式（与设备上其它 tweak 一致），OpenStep 格式未验证。
+- roothide 的 `DynamicLibraries` 与 `/usr/lib/TweakInject` 是同一批文件（inode 相同），
+  改一处即另一处。
+- 排查手段：`icli log syslog --process QQ` 抓启动日志；
+  崩溃报告 `usedImages` 里能直接看到被注入的 dylib 路径。
