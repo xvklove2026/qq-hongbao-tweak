@@ -393,9 +393,9 @@ static void QQHBAutoGrabFromModel(id model) {
     if (!cfg.enabled) return;
 
     id openState = nil, isSelf = nil, msgId = nil;
-    @try { openState = [model valueForKey:@"openState"]; } catch (__unused NSException *e) {}
-    @try { isSelf = [model valueForKey:@"isSelfMsg"]; } catch (__unused NSException *e) {}
-    @try { msgId = [model valueForKey:@"billNo"]; } catch (__unused NSException *e) {}
+    @try { openState = [model valueForKey:@"openState"]; } @catch (__unused NSException *e) {}
+    @try { isSelf = [model valueForKey:@"isSelfMsg"]; } @catch (__unused NSException *e) {}
+    @try { msgId = [model valueForKey:@"billNo"]; } @catch (__unused NSException *e) {}
     if ([openState isKindOfClass:[NSNumber class]] && [openState integerValue] != 0) return;
     if ([isSelf isKindOfClass:[NSNumber class]] && [isSelf boolValue] && !cfg.grabOwnPackets) {
         QQHBLog(@"[跳过] 自己发的红包");
@@ -421,7 +421,7 @@ static void QQHBAutoGrabFromModel(id model) {
         return;
     }
     id params = nil;
-    @try { params = [model performSelector:paramsSel]; } catch (__unused NSException *e) {}
+    @try { params = [model performSelector:paramsSel]; } @catch (__unused NSException *e) {}
     QQHBLog(@"[抢] 抢包参数: %@", QQHBStringOf(params));
 
     Class wallet = objc_getClass("QQWallet");
@@ -430,9 +430,9 @@ static void QQHBAutoGrabFromModel(id model) {
         return;
     }
     id walletObj = nil;
-    @try { walletObj = [wallet performSelector:NSSelectorFromString(@"sharedInstance")]; } catch (__unused NSException *e) {}
+    @try { walletObj = [wallet performSelector:NSSelectorFromString(@"sharedInstance")]; } @catch (__unused NSException *e) {}
     if (!walletObj) {
-        @try { walletObj = [[wallet alloc] init]; } catch (__unused NSException *e) {}
+        @try { walletObj = [[wallet alloc] init]; } @catch (__unused NSException *e) {}
     }
     if (!walletObj) {
         QQHBLog(@"[抢] 拿不到 QQWallet 实例");
