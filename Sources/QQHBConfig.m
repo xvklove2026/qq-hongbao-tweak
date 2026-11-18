@@ -148,6 +148,17 @@ static NSDictionary *QQHBDefaultConfig(void) {
     return out;
 }
 
+- (BOOL)isConfiguredSelector:(SEL)sel {
+    NSString *name = NSStringFromSelector(sel);
+    for (NSDictionary *h in self.grabHooks) {
+        if ([h[@"selector"] isKindOfClass:[NSString class]] &&
+            [h[@"selector"] isEqualToString:name]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (BOOL)isObserveSelector:(SEL)sel {
     NSString *name = NSStringFromSelector(sel);
     for (NSDictionary *h in self.grabHooks) {

@@ -351,6 +351,15 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
     }
 
     if (cfg.diagnose) {
+        QQHBAppendText(@"trace.txt", [NSString stringWithFormat:@"%@ -[%s %s] arg=%@",
+                                      [NSDate date],
+                                      class_getName([target class]),
+                                      sel_getName(sel),
+                                      arg ? NSStringFromClass([arg class]) : @"nil"]);
+    }
+
+    BOOL detailed = [cfg isConfiguredSelector:sel] || [cfg isObserveSelector:sel];
+    if (cfg.diagnose && detailed) {
         QQHBDumpObject("target", target);
         QQHBDumpObject("arg", arg);
         QQHBDumpValues("arg", arg, @[@"selfUin", @"selfName", @"senderUin", @"senderName",
@@ -1045,6 +1054,42 @@ static void QQHBInstallNotificationHooks(void) {
     QQHBLog(@"[通知] 已挂上 NSNotificationCenter 观察");
 }
 
+static void QQHBInstallTraceHooks(void) {
+    static BOOL done;
+    if (done) return;
+    done = YES;
+
+    NSArray *classes = @[@"QQWallet",
+                         @"QQWalletRedPacketMsgView",
+                         @"QQWalletRedPacketSpecifyMsgView",
+                         @"QQWalletRedPacketFestivalMsgView",
+                         @"QQWalletGrapHBService",
+                         @"QQWalletRedPacketMsgModel",
+                         @"QQWalletNTRedPackMsgModel",
+                         @"QQWalletRedPackManager"];
+    NSArray *keywords = @[@"grab", @"Grab", @"open", @"Open", @"click", @"Click",
+                          @"tap", @"Tap", @"tail", @"Tail", @"handle", @"Handle",
+                          @"send", @"Send", @"request", @"Request", @"start", @"Start"];
+    NSUInteger installed = 0;
+    for (NSString *clsName in classes) {
+        Class cls = objc_getClass(clsName.UTF8String);
+        if (!cls) continue;
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(cls, &count);
+        for (unsigned int i = 0; i < count && installed < 300; i++) {
+            NSString *selName = NSStringFromSelector(method_getName(methods[i]));
+            BOOL hit = NO;
+            for (NSString *k in keywords) {
+                if ([selName rangeOfString:k].location != NSNotFound) { hit = YES; break; }
+            }
+            if (!hit) continue;
+            if (QQHBInstallHook(cls, method_getName(methods[i]))) installed++;
+        }
+        if (methods) free(methods);
+    }
+    QQHBLog(@"[追踪] 已挂 %lu 个方法", (unsigned long)installed);
+}
+
 void QQHBStart(void) {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
@@ -1056,6 +1101,7 @@ void QQHBStart(void) {
             if ([[QQHBConfig shared] diagnose]) QQHBDiagnoseScan();
             QQHBInstallConfiguredHooks();
             QQHBInstallNotificationHooks();
+            if ([[QQHBConfig shared] diagnose]) QQHBInstallTraceHooks();
         });
         for (int i = 1; i <= 40; i++) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(i * 3 * NSEC_PER_SEC)),
