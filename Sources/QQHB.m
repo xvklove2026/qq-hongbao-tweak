@@ -248,12 +248,44 @@ static void QQHBAppendText(NSString *file, NSString *line) {
     [fh closeFile];
 }
 
+static NSMutableSet<NSString *> *gDumpedClasses;
+
+/* 把一个对象的结构打印出来：类名、属性名、description，用来找真实字段名 */
+static void QQHBDumpObject(const char *tag, id obj) {
+    if (!obj) return;
+    Class cls = object_getClass(obj);
+    if (!cls) return;
+    if (!gDumpedClasses) gDumpedClasses = [NSMutableSet set];
+    NSString *key = [NSString stringWithFormat:@"%s|%s", tag, class_getName(cls)];
+    if ([gDumpedClasses containsObject:key]) return;
+    [gDumpedClasses addObject:key];
+
+    NSMutableArray *props = [NSMutableArray array];
+    unsigned int pcount = 0;
+    objc_property_t *plist = class_copyPropertyList(cls, &pcount);
+    for (unsigned int i = 0; i < pcount; i++) {
+        [props addObject:[NSString stringWithUTF8String:property_getName(plist[i])]];
+    }
+    if (plist) free(plist);
+
+    NSString *desc = nil;
+    @try { desc = [obj description]; } @catch (__unused NSException *e) {}
+    if (desc.length > 400) desc = [desc substringToIndex:400];
+
+    NSString *line = [NSString stringWithFormat:@"%s %s 属性: %@\n    description: %@",
+                      tag, class_getName(cls),
+                      [props componentsJoinedByString:@","], desc ?: @"(nil)"];
+    QQHBLog(@"%@", line);
+    QQHBAppendText(@"structure.txt", line);
+}
+
 /* 返回 YES 表示允许原方法继续（即真的去抢） */
 static BOOL QQHBBefore(id target, SEL sel, id arg) {
     QQHBConfig *cfg = [QQHBConfig shared];
     NSString *why = nil;
     id packet = target ?: arg;
     if (cfg.diagnose) {
+        QQHBDumpObject("packet", packet);
         QQHBLog(@"[诊断] -[%@ %@] 标题=%@ QQ=%@ 类型=%@",
                 NSStringFromClass([target class]), NSStringFromSelector(sel),
                 QQHBTitle(packet) ?: @"(无)",
@@ -340,6 +372,9 @@ static id QQHBT_id_2(id self, SEL _cmd, id a1, id a2) {
 }
 
 static void QQHBT_void_3(id self, SEL _cmd, id a1, id a2, id a3) {
+    QQHBDumpObject("v3-arg1", a1);
+    QQHBDumpObject("v3-arg2", a2);
+    QQHBDumpObject("v3-arg3", a3);
     if (!QQHBBefore(self, _cmd, a1)) return;
     IMP o = QQHBOriginalFor(_cmd);
     if (o) ((void (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, a3);
@@ -356,6 +391,8 @@ static id QQHBT_id_3(id self, SEL _cmd, id a1, id a2, id a3) {
 
 static void QQHBT_void_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
     /* grabHBParams:password:checkInfo:redPack: —— 红包对象在最后一个参数 */
+    QQHBDumpObject("v4-arg1", a1);
+    QQHBDumpObject("v4-arg4", a4);
     if (!QQHBBefore(self, _cmd, a4 ?: a1)) return;
     IMP o = QQHBOriginalFor(_cmd);
     if (o) ((void (*)(id, SEL, id, id, id, id))o)(self, _cmd, a1, a2, a3, a4);
