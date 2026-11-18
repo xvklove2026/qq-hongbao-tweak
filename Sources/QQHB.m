@@ -735,6 +735,26 @@ static void QQHBDiagnoseScan(void) {
     }
     if (classes) free(classes);
 
+    /* 第三遍：关键类的全部方法，用来找真正的入口 */
+    [report appendString:@"\n=== 关键类全部方法 ===\n"];
+    NSArray *focus = @[@"QQWalletGrapHBAIOData", @"QQWalletGrapHBService",
+                       @"QQWalletRedPacketMsgView", @"QQWalletRedPacketMsgModel",
+                       @"QQWalletNTRedPackMsgModel"];
+    for (NSString *cn in focus) {
+        Class c = objc_getClass(cn.UTF8String);
+        if (!c) {
+            [report appendFormat:@"\n-- %@ 未加载 --\n", cn];
+            continue;
+        }
+        [report appendFormat:@"\n-- %@ --\n", cn];
+        unsigned int mc = 0;
+        Method *ms = class_copyMethodList(c, &mc);
+        for (unsigned int j = 0; j < mc; j++) {
+            [report appendFormat:@"  %s\n", sel_getName(method_getName(ms[j]))];
+        }
+        if (ms) free(ms);
+    }
+
     NSString *path = [QQHBSupportDir() stringByAppendingPathComponent:@"diag.txt"];
     [report writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     QQHBLog(@"[诊断] 扫描完成，候选类 %lu 个，grab 方法 %lu 个，报告写在 %@",
