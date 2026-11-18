@@ -121,6 +121,7 @@ jobs:
           git config user.email "ci@users.noreply.github.com"
           git checkout -B "ci-log-${{ matrix.bootstrap }}"
           tail -c 20000 /tmp/build.log > ci-log.txt || true
-          git add -f ci-log.txt
+          grep -E "(^mode:|^SYSROOT=|\+ clang|error|Error|warning:)" /tmp/build.log | tail -40 > ci-log-errors.txt || true
+          git add -f ci-log.txt ci-log-errors.txt
           git commit -m "ci log ${{ matrix.bootstrap }}" || true
           git push -f origin "ci-log-${{ matrix.bootstrap }}"
