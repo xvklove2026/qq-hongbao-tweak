@@ -534,7 +534,7 @@ static void QQHBForceGrab(id model) {
     QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] 调用 grabHB params=%@",
                                       QQHBStringOf(params)]);
     @try {
-        [(id<QQHBGrabCommitting>)wallet grabHB:model params:params completion:nil];
+        [(id<QQHBGrabCommitting>)wallet grabHB:nil params:params completion:nil];
     } @catch (__unused NSException *e) {
         QQHBAppendText(@"structure.txt", @"[抢] grabHB 抛异常");
     }
