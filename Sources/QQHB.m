@@ -286,9 +286,10 @@ static void QQHBDumpObject(const char *tag, id obj) {
 static BOOL QQHBBefore(id target, SEL sel, id arg) {
     QQHBConfig *cfg = [QQHBConfig shared];
     NSString *why = nil;
-    id packet = target ?: arg;
+    id packet = arg ?: target;
     if (cfg.diagnose) {
-        QQHBDumpObject("packet", packet);
+        QQHBDumpObject("target", target);
+        QQHBDumpObject("arg", arg);
         QQHBLog(@"[诊断] -[%@ %@] 标题=%@ QQ=%@ 类型=%@",
                 NSStringFromClass([target class]), NSStringFromSelector(sel),
                 QQHBTitle(packet) ?: @"(无)",
