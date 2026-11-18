@@ -51,12 +51,12 @@ run_clang() {
     arch="$1"; out="$2"; shift 2
     if [ -n "$SYSROOT" ]; then
         echo "+ clang -target $arch-apple-ios16.0 -isysroot $SYSROOT $LD_FLAGS $LINK_EXTRA $*"
-        clang -v -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
+        clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
             -F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib" \
             "$@" $LINK_EXTRA -dynamiclib $FRAMEWORKS -o "$out"
     else
         echo "+ clang -target $arch-apple-ios16.0 $LD_FLAGS $LINK_EXTRA $*"
-        clang -v -target "$arch-apple-ios16.0" $LD_FLAGS "$@" $LINK_EXTRA \
+        clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" $LINK_EXTRA \
             -dynamiclib $FRAMEWORKS -o "$out"
     fi
 }
@@ -85,6 +85,7 @@ Version: $VERSION
 Architecture: $APELIN_ARCHITECTURE
 Author: YG
 Section: Tweaks
+Maintainer: YG
 Depends: firmware (>= 16.0), mobilesubstrate
 Description: QQ 自动抢红包：可抢自己发的，专属红包不抢，关键词黑名单不抢，并记录发送者 QQ、昵称、金额与时间。
 EOF
