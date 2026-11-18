@@ -51,12 +51,12 @@ run_clang() {
     arch="$1"; out="$2"; shift 2
     if [ -n "$SYSROOT" ]; then
         echo "+ clang -target $arch-apple-ios16.0 -isysroot $SYSROOT $LD_FLAGS $LINK_EXTRA $*"
-        clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
+        clang -v -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
             -F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib" \
             "$@" $LINK_EXTRA -dynamiclib $FRAMEWORKS -o "$out"
     else
         echo "+ clang -target $arch-apple-ios16.0 $LD_FLAGS $LINK_EXTRA $*"
-        clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" $LINK_EXTRA \
+        clang -v -target "$arch-apple-ios16.0" $LD_FLAGS "$@" $LINK_EXTRA \
             -dynamiclib $FRAMEWORKS -o "$out"
     fi
 }
