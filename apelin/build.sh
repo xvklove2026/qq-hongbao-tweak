@@ -9,16 +9,9 @@ NAME=QQHongbao
 PACKAGE=com.yg.qqhongbao
 PREFIX="${APELIN_PREFIX:-}"
 
-# 版本号存在 VERSION 文件里：每次构建先 +1 再用，保证 dpkg/Sileo 一定覆盖升级
+# 版本号用时间戳：0.1.<YYMMDDHHMMSS>，每次构建必然比上一次大，dpkg/Sileo 不会跳过
 cd "${APELIN_PROJECT_ROOT:?}"
-VERFILE="VERSION"
-if [ -f "$VERFILE" ]; then
-    VERSION="$(tr -d ' \n' < "$VERFILE")"
-else
-    VERSION="0.1.0"
-fi
-VERSION="$(echo "$VERSION" | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')"
-echo "$VERSION" > "$VERFILE"
+VERSION="0.1.$(date +%y%m%d%H%M%S)"
 echo "package version: $VERSION"
 
 # Apelin 通过 SDKROOT 给 SDK；Mac / GitHub runner 上没有，用 xcrun 取
