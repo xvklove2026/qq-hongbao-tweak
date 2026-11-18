@@ -504,7 +504,8 @@ static void QQHBAutoGrab(id view, id model) {
 
 static void QQHBT_void_1(id self, SEL _cmd, id a1) {
     NSString *selName = NSStringFromSelector(_cmd);
-    if ([selName isEqualToString:@"updateViewWithRedPacketMsgModel:"]) {
+    if ([selName isEqualToString:@"updateViewWithRedPacketMsgModel:"] ||
+        [selName isEqualToString:@"setRedPacketMsgModel:"]) {
         QQHBAutoGrab(self, a1);
         IMP o = QQHBOriginalFor(_cmd);
         if (o) ((void (*)(id, SEL, id))o)(self, _cmd, a1);
