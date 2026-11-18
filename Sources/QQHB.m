@@ -686,10 +686,27 @@ static id QQHBT_id_2(id self, SEL _cmd, id a1, id a2) {
 
 typedef void (^QQHBGrabCompletion)(int, id);
 
+/* 打印字典内容（params 就是字典） */
+static void QQHBDumpDict(const char *tag, id obj) {
+    if (![obj isKindOfClass:[NSDictionary class]]) return;
+    NSMutableArray *parts = [NSMutableArray array];
+    [(NSDictionary *)obj enumerateKeysAndObjectsUsingBlock:^(id k, id v, BOOL *stop) {
+        NSString *s = QQHBStringOf(v);
+        if (!s || s.length == 0) return;
+        if (s.length > 100) s = [s substringToIndex:100];
+        [parts addObject:[NSString stringWithFormat:@"%@=%@", k, s]];
+        if (parts.count >= 40) *stop = YES;
+    }];
+    if (parts.count == 0) return;
+    QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"%s dict: %@", tag,
+                                      [parts componentsJoinedByString:@" | "]]);
+}
+
 static void QQHBT_void_3(id self, SEL _cmd, id a1, id a2, id a3) {
     QQHBDumpObject("v3-arg1", a1);
     QQHBDumpObject("v3-arg2", a2);
     QQHBDumpObject("v3-arg3", a3);
+    QQHBDumpDict("v3-arg2", a2);
     if (!QQHBBefore(self, _cmd, a1)) return;
     IMP o = QQHBOriginalFor(self, _cmd);
     if (!o) return;
