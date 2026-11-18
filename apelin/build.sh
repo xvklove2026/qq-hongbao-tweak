@@ -7,8 +7,17 @@ set -eu
 
 NAME=QQHongbao
 PACKAGE=com.yg.qqhongbao
-VERSION=0.1.0
 PREFIX="${APELIN_PREFIX:-}"
+
+# 版本号存在 VERSION 文件里，每次构建自动 +1，保证 dpkg 能覆盖升级
+cd "${APELIN_PROJECT_ROOT:?}"
+VERFILE="VERSION"
+if [ -f "$VERFILE" ]; then
+    VERSION="$(cat "$VERFILE" | tr -d ' \n')"
+else
+    VERSION="0.1.0"
+fi
+echo "version: $VERSION"
 
 # Apelin 通过 SDKROOT 给 SDK；Mac / GitHub runner 上没有，用 xcrun 取
 SYSROOT="${SDKROOT:-}"
@@ -77,6 +86,7 @@ else
 fi
 
 ldid -S "${work:?}/$NAME.dylib"
+lipo -info "${work:?}/$NAME.dylib" 2>/dev/null || true
 
 LIBDIR="$stage$PREFIX/Library/MobileSubstrate/DynamicLibraries"
 mkdir -p "${LIBDIR:?}" "$stage$PREFIX/DEBIAN"
@@ -102,3 +112,8 @@ EOF
 
 dpkg-deb -b --root-owner-group "${stage:?}" "${APELIN_PACKAGE_DIR:?}/" >/dev/null
 ls -1 "${APELIN_PACKAGE_DIR:?}"
+
+# 成功出包后把版本号 +1，下次构建就是新版本，dpkg/Sileo 才会真正覆盖安装
+next="$(echo "$VERSION" | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')"
+echo "$next" > "$VERFILE"
+echo "next version: $next"
