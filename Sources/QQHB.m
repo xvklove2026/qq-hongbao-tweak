@@ -376,7 +376,64 @@ static void QQHBT_void_0(id self, SEL _cmd) {
     QQHBAfter(self, _cmd, nil, nil);
 }
 
+static NSMutableSet<NSString *> *gAutoGrabbed;
+
+/* 红包卡片出现时：判断该不该抢，然后模拟点击「开」按钮 */
+static void QQHBAutoGrab(id view, id model) {
+    QQHBConfig *cfg = [QQHBConfig shared];
+    if (!cfg.enabled) return;
+
+    if (cfg.diagnose) {
+        QQHBDumpObject("model", model);
+        QQHBDumpAllValues("model", model);
+    }
+
+    /* 已经拆开的不处理 */
+    id openState = nil;
+    @try { openState = [model valueForKey:@"openState"]; } @catch (__unused NSException *e) {}
+    if ([openState isKindOfClass:[NSNumber class]] && [openState integerValue] != 0) return;
+
+    /* 同一个红包只抢一次 */
+    id msgId = nil;
+    @try { msgId = [model valueForKey:@"msgId"]; } @catch (__unused NSException *e) {}
+    NSString *key = msgId ? QQHBStringOf(msgId) : [NSString stringWithFormat:@"%p", model];
+    if (!key.length) key = [NSString stringWithFormat:@"%p", model];
+    if (!gAutoGrabbed) gAutoGrabbed = [NSMutableSet set];
+    if ([gAutoGrabbed containsObject:key]) return;
+    [gAutoGrabbed addObject:key];
+
+    NSString *why = nil;
+    if (QQHBDecide(model, &why)) {
+        QQHBLog(@"[跳过] 红包卡片 原因:%@", why);
+        QQHBAppendText(@"skips.txt", [NSString stringWithFormat:@"%@  卡片  %@", [NSDate date], why]);
+        return;
+    }
+
+    NSInteger delay = QQHBRandomDelay();
+    QQHBLog(@"[抢] 卡片出现，%ldms 后点开", (long)delay);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_MSEC)),
+                   dispatch_get_main_queue(), ^{
+        id button = nil;
+        @try { button = [view valueForKey:@"openButton"]; } @catch (__unused NSException *e) {}
+        if (!button) {
+            QQHBLog(@"[抢] 没找到 openButton");
+            return;
+        }
+        SEL sel = NSSelectorFromString(@"sendActionsForControlEvents:");
+        if (![button respondsToSelector:sel]) return;
+        QQHBLog(@"[抢] 点击 openButton");
+        ((void (*)(id, SEL, unsigned long))objc_msgSend)(button, sel, (1UL << 6));
+    });
+}
+
 static void QQHBT_void_1(id self, SEL _cmd, id a1) {
+    NSString *selName = NSStringFromSelector(_cmd);
+    if ([selName isEqualToString:@"updateViewWithRedPacketMsgModel:"]) {
+        QQHBAutoGrab(self, a1);
+        IMP o = QQHBOriginalFor(_cmd);
+        if (o) ((void (*)(id, SEL, id))o)(self, _cmd, a1);
+        return;
+    }
     if (!QQHBBefore(self, _cmd, a1)) return;
     QQHBConfig *cfg = [QQHBConfig shared];
     IMP o = QQHBOriginalFor(_cmd);
