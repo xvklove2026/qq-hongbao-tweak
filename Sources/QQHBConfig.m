@@ -121,28 +121,9 @@ static NSDictionary *QQHBDefaultConfig(void) {
         }
     }
     if (out.count == 0) {
-        /* 9.3.x 上诊断出来的真实入口：QQWallet 的抢包 API */
+        /* 只观察 QQ 原生抢包完成回调，不修改参数、不模拟点击。 */
         return @[
-            @{@"class": @"QQWallet",
-              @"selector": @"grabRedPack:params:completion:"},
-            @{@"class": @"QQWallet",
-              @"selector": @"grabHB:params:completion:"},
-            @{@"class": @"QQWalletGrapHBService",
-              @"selector": @"buildPreGrabReqWithAIOData:"},
-            @{@"class": @"QQWallet",
-              @"selector": @"onGrabFinish:errorCode:"},
-            @{@"class": @"QQWalletRedPacketMsgView",
-              @"selector": @"updateViewWithRedPacketMsgModel:",
-              @"observe": @YES},
-            @{@"class": @"QQWalletRedPacketMsgView",
-              @"selector": @"setRedPacketMsgModel:",
-              @"observe": @YES},
-            @{@"class": @"QQWalletRedPacketMsgModel",
-              @"selector": @"initWithRedPacketInfo:",
-              @"observe": @YES},
-            @{@"class": @"QQWalletRedPackManager",
-              @"selector": @"addRedPackToDict:redPack:",
-              @"observe": @YES}
+            @{ @"class": @"QQWallet", @"selector": @"grabRedPack:params:completion:" }
         ];
     }
     return out;
