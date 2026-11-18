@@ -130,10 +130,25 @@ static NSDictionary *QQHBDefaultConfig(void) {
             @{@"class": @"QQWalletGrapHBService",
               @"selector": @"buildPreGrabReqWithAIOData:"},
             @{@"class": @"QQWallet",
-              @"selector": @"onGrabFinish:errorCode:"}
+              @"selector": @"onGrabFinish:errorCode:"},
+            @{@"class": @"QQWalletRedPacketMsgView",
+              @"selector": @"updateViewWithRedPacketMsgModel:",
+              @"observe": @YES}
         ];
     }
     return out;
+}
+
+- (BOOL)isObserveSelector:(SEL)sel {
+    NSString *name = NSStringFromSelector(sel);
+    for (NSDictionary *h in self.grabHooks) {
+        if (![h[@"observe"] boolValue]) continue;
+        if ([h[@"selector"] isKindOfClass:[NSString class]] &&
+            [h[@"selector"] isEqualToString:name]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)containsAny:(NSArray<NSString *> *)words in:(NSString *)text {

@@ -17,6 +17,8 @@
 @property (nonatomic, readonly) NSArray<NSString *> *grabKeywords;
 @property (nonatomic, readonly) NSArray<NSDictionary *> *grabHooks;
 
+- (BOOL)isObserveSelector:(SEL)sel;
+
 - (BOOL)shouldSkipTitle:(NSString *)title;
 - (BOOL)titleWanted:(NSString *)title;
 

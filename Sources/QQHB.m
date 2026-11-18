@@ -307,6 +307,16 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
     QQHBConfig *cfg = [QQHBConfig shared];
     NSString *why = nil;
     id packet = arg ?: target;
+    /* 观察型钩子：只记录，绝不拦 */
+    if ([cfg isObserveSelector:sel]) {
+        if (cfg.diagnose) {
+            QQHBDumpObject("observe", arg);
+            QQHBDumpValues("observe", arg, @[@"title", @"wishing", @"message", @"senderName",
+                                             @"senderUin", @"redPacketType", @"type"]);
+        }
+        return YES;
+    }
+
     if (cfg.diagnose) {
         QQHBDumpObject("target", target);
         QQHBDumpObject("arg", arg);
@@ -334,7 +344,7 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
 
 static void QQHBAfter(id target, SEL sel, id arg, id result) {
     (void)result;
-    QQHBRecordGrabbed(target ?: arg, sel);
+    QQHBRecordGrabbed(arg ?: target, sel);
 }
 
 /* 各种签名对应的跳板 */
