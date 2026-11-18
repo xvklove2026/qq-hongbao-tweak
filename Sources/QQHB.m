@@ -253,6 +253,26 @@ static void QQHBAppendText(NSString *file, NSString *line) {
 
 static NSMutableSet<NSString *> *gDumpedClasses;
 
+/* 打印若干字段的实际值，用来确定字段含义 */
+static void QQHBDumpValues(const char *tag, id obj, NSArray<NSString *> *keys) {
+    if (!obj) return;
+    NSMutableArray *parts = [NSMutableArray array];
+    for (NSString *k in keys) {
+        id v = nil;
+        @try { v = [obj valueForKey:k]; } @catch (__unused NSException *e) {}
+        if (!v) continue;
+        NSString *s = QQHBStringOf(v);
+        if (!s) continue;
+        if (s.length > 200) s = [s substringToIndex:200];
+        [parts addObject:[NSString stringWithFormat:@"%@=%@", k, s]];
+    }
+    if (parts.count == 0) return;
+    NSString *line = [NSString stringWithFormat:@"%s 值: %@", tag,
+                      [parts componentsJoinedByString:@" | "]];
+    QQHBLog(@"%@", line);
+    QQHBAppendText(@"structure.txt", line);
+}
+
 /* 把一个对象的结构打印出来：类名、属性名、description，用来找真实字段名 */
 static void QQHBDumpObject(const char *tag, id obj) {
     if (!obj) return;
@@ -290,6 +310,10 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
     if (cfg.diagnose) {
         QQHBDumpObject("target", target);
         QQHBDumpObject("arg", arg);
+        QQHBDumpValues("arg", arg, @[@"selfUin", @"selfName", @"senderUin", @"senderName",
+                                     @"hbFlag", @"hbFrom", @"hbFromType", @"groupType",
+                                     @"payFlag", @"msgId", @"extParam", @"answer",
+                                     @"skinType", @"comeFrom", @"qrData"]);
         QQHBLog(@"[诊断] -[%@ %@] 标题=%@ QQ=%@ 类型=%@",
                 NSStringFromClass([target class]), NSStringFromSelector(sel),
                 QQHBTitle(packet) ?: @"(无)",
@@ -411,6 +435,14 @@ static id QQHBT_id_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
     return r;
 }
 
+/* -onGrabFinish:errorCode: 这类 (对象, 整数) 的 void 方法 */
+static void QQHBT_void_id_q(id self, SEL _cmd, id a1, long long a2) {
+    if (!QQHBBefore(self, _cmd, a1)) return;
+    IMP o = QQHBOriginalFor(_cmd);
+    if (o) ((void (*)(id, SEL, id, long long))o)(self, _cmd, a1, a2);
+    QQHBAfter(self, _cmd, a1, nil);
+}
+
 /* 按类型编码挑跳板：无法安全处理就返回 NULL，宁可不 hook 也不搞乱返回寄存器 */
 static IMP QQHBTrampolineFor(Method m) {
     const char *enc = method_getTypeEncoding(m);
@@ -430,6 +462,16 @@ static IMP QQHBTrampolineFor(Method m) {
     }
     /* types[0] 是 self(@)，types[1] 是 _cmd(:) */
     NSUInteger argc = types.count > 2 ? types.count - 2 : 0;
+
+    /* (对象, 整数) 的 void 方法，比如 -onGrabFinish:errorCode: */
+    if (ret == 'v' && argc == 2 && types.count >= 4) {
+        char t1 = (char)[types[2] charValue];
+        char t2 = (char)[types[3] charValue];
+        if (t1 == '@' && (t2 == 'q' || t2 == 'i' || t2 == 'l')) {
+            return (IMP)QQHBT_void_id_q;
+        }
+    }
+
     BOOL argsOk = YES;
     for (NSUInteger i = 2; i < types.count; i++) {
         char c = (char)[types[i] charValue];

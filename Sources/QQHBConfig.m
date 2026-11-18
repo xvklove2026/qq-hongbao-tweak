@@ -128,7 +128,9 @@ static NSDictionary *QQHBDefaultConfig(void) {
             @{@"class": @"QQWallet",
               @"selector": @"grabHB:params:completion:"},
             @{@"class": @"QQWalletGrapHBService",
-              @"selector": @"buildPreGrabReqWithAIOData:"}
+              @"selector": @"buildPreGrabReqWithAIOData:"},
+            @{@"class": @"QQWallet",
+              @"selector": @"onGrabFinish:errorCode:"}
         ];
     }
     return out;
