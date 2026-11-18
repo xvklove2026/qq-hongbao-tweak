@@ -216,8 +216,15 @@ static void QQHBResolveHookAPI(void) {
     });
 }
 
-static IMP QQHBOriginalFor(SEL sel) {
-    NSValue *v = gOriginals[NSStringFromSelector(sel)];
+/* 原始实现按「类名|选择器」存：同一个选择器可能挂在父类和子类上 */
+static IMP QQHBOriginalFor(id self, SEL sel) {
+    NSString *selName = NSStringFromSelector(sel);
+    for (Class c = object_getClass(self); c; c = class_getSuperclass(c)) {
+        NSString *key = [NSString stringWithFormat:@"%s|%@", class_getName(c), selName];
+        NSValue *v = gOriginals[key];
+        if (v) return (IMP)v.pointerValue;
+    }
+    NSValue *v = gOriginals[[NSString stringWithFormat:@"*|%@", selName]];
     return v ? (IMP)v.pointerValue : NULL;
 }
 
@@ -229,11 +236,15 @@ static NSInteger QQHBRandomDelay(void) {
 }
 
 static void QQHBAppendText(NSString *file, NSString *line) {
+    static NSUInteger counter = 0;
     NSString *path = [QQHBSupportDir() stringByAppendingPathComponent:file];
     NSFileManager *fm = [NSFileManager defaultManager];
-    NSDictionary *attrs = [fm attributesOfItemAtPath:path error:NULL];
-    if ([attrs[NSFileSize] unsignedLongLongValue] > 256 * 1024) {
-        [fm removeItemAtPath:path error:NULL];
+    /* 每 100 次才检查一次大小，避免频繁取文件属性 */
+    if ((counter++ % 100) == 0) {
+        NSDictionary *attrs = [fm attributesOfItemAtPath:path error:NULL];
+        if ([attrs[NSFileSize] unsignedLongLongValue] > 256 * 1024) {
+            [fm removeItemAtPath:path error:NULL];
+        }
     }
     NSString *text = [line stringByAppendingString:@"\n"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
@@ -372,7 +383,7 @@ static void QQHBAfter(id target, SEL sel, id arg, id result) {
 /* 各种签名对应的跳板 */
 static void QQHBT_void_0(id self, SEL _cmd) {
     if (!QQHBBefore(self, _cmd, nil)) return;
-    IMP o = QQHBOriginalFor(_cmd); if (o) ((void (*)(id, SEL))o)(self, _cmd);
+    IMP o = QQHBOriginalFor(self, _cmd); if (o) ((void (*)(id, SEL))o)(self, _cmd);
     QQHBAfter(self, _cmd, nil, nil);
 }
 
@@ -502,18 +513,31 @@ static void QQHBAutoGrab(id view, id model) {
     });
 }
 
+static __thread int gHookDepth;
+
 static void QQHBT_void_1(id self, SEL _cmd, id a1) {
     NSString *selName = NSStringFromSelector(_cmd);
     if ([selName isEqualToString:@"updateViewWithRedPacketMsgModel:"] ||
         [selName isEqualToString:@"setRedPacketMsgModel:"]) {
-        QQHBAutoGrab(self, a1);
-        IMP o = QQHBOriginalFor(_cmd);
+        /* 防递归：父类/子类都挂了同一个选择器时会互相回调 */
+        if (gHookDepth > 0) {
+            IMP oo = QQHBOriginalFor(self, _cmd);
+            if (oo) ((void (*)(id, SEL, id))oo)(self, _cmd, a1);
+            return;
+        }
+        gHookDepth++;
+        @try {
+            QQHBAutoGrab(self, a1);
+        } @catch (__unused NSException *e) {
+        }
+        IMP o = QQHBOriginalFor(self, _cmd);
         if (o) ((void (*)(id, SEL, id))o)(self, _cmd, a1);
+        gHookDepth--;
         return;
     }
     if (!QQHBBefore(self, _cmd, a1)) return;
     QQHBConfig *cfg = [QQHBConfig shared];
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     NSInteger d = cfg.delayMs > 0 ? QQHBRandomDelay() : 0;
     if (d > 0) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(d * NSEC_PER_MSEC)),
@@ -530,13 +554,13 @@ static void QQHBT_void_1(id self, SEL _cmd, id a1) {
 static id QQHBT_id_1(id self, SEL _cmd, id a1) {
     NSString *selName = NSStringFromSelector(_cmd);
     if ([selName isEqualToString:@"initWithRedPacketInfo:"]) {
-        IMP o0 = QQHBOriginalFor(_cmd);
+        IMP o0 = QQHBOriginalFor(self, _cmd);
         id r0 = o0 ? ((id (*)(id, SEL, id))o0)(self, _cmd, a1) : nil;
         QQHBAutoGrabFromModel(r0 ?: self);
         return r0;
     }
     if (!QQHBBefore(self, _cmd, a1)) return nil;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     id r = o ? ((id (*)(id, SEL, id))o)(self, _cmd, a1) : nil;
     QQHBAfter(self, _cmd, a1, r);
     return r;
@@ -544,7 +568,7 @@ static id QQHBT_id_1(id self, SEL _cmd, id a1) {
 
 static BOOL QQHBT_bool_1(id self, SEL _cmd, id a1) {
     if (!QQHBBefore(self, _cmd, a1)) return NO;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     BOOL r = o ? ((BOOL (*)(id, SEL, id))o)(self, _cmd, a1) : NO;
     QQHBAfter(self, _cmd, a1, nil);
     return r;
@@ -552,7 +576,7 @@ static BOOL QQHBT_bool_1(id self, SEL _cmd, id a1) {
 
 static long long QQHBT_int_1(id self, SEL _cmd, id a1) {
     if (!QQHBBefore(self, _cmd, a1)) return 0;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     long long r = o ? ((long long (*)(id, SEL, id))o)(self, _cmd, a1) : 0;
     QQHBAfter(self, _cmd, a1, nil);
     return r;
@@ -560,13 +584,13 @@ static long long QQHBT_int_1(id self, SEL _cmd, id a1) {
 
 static void QQHBT_void_2(id self, SEL _cmd, id a1, id a2) {
     if (!QQHBBefore(self, _cmd, a1)) return;
-    IMP o = QQHBOriginalFor(_cmd); if (o) ((void (*)(id, SEL, id, id))o)(self, _cmd, a1, a2);
+    IMP o = QQHBOriginalFor(self, _cmd); if (o) ((void (*)(id, SEL, id, id))o)(self, _cmd, a1, a2);
     QQHBAfter(self, _cmd, a1, nil);
 }
 
 static id QQHBT_id_2(id self, SEL _cmd, id a1, id a2) {
     if (!QQHBBefore(self, _cmd, a1)) return nil;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     id r = o ? ((id (*)(id, SEL, id, id))o)(self, _cmd, a1, a2) : nil;
     QQHBAfter(self, _cmd, a1, r);
     return r;
@@ -579,7 +603,7 @@ static void QQHBT_void_3(id self, SEL _cmd, id a1, id a2, id a3) {
     QQHBDumpObject("v3-arg2", a2);
     QQHBDumpObject("v3-arg3", a3);
     if (!QQHBBefore(self, _cmd, a1)) return;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     if (!o) return;
 
     /* grabRedPack:params:completion: —— 把 completion 包一层，抓抢包结果（金额） */
@@ -607,7 +631,7 @@ static void QQHBT_void_3(id self, SEL _cmd, id a1, id a2, id a3) {
 
 static id QQHBT_id_3(id self, SEL _cmd, id a1, id a2, id a3) {
     if (!QQHBBefore(self, _cmd, a1)) return nil;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     id r = o ? ((id (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, a3) : nil;
     QQHBAfter(self, _cmd, a1, r);
     return r;
@@ -618,14 +642,14 @@ static void QQHBT_void_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
     QQHBDumpObject("v4-arg1", a1);
     QQHBDumpObject("v4-arg4", a4);
     if (!QQHBBefore(self, _cmd, a4 ?: a1)) return;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     if (o) ((void (*)(id, SEL, id, id, id, id))o)(self, _cmd, a1, a2, a3, a4);
     QQHBAfter(self, _cmd, a4 ?: a1, nil);
 }
 
 static id QQHBT_id_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
     if (!QQHBBefore(self, _cmd, a4 ?: a1)) return nil;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     id r = o ? ((id (*)(id, SEL, id, id, id, id))o)(self, _cmd, a1, a2, a3, a4) : nil;
     QQHBAfter(self, _cmd, a4 ?: a1, r);
     return r;
@@ -634,7 +658,7 @@ static id QQHBT_id_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
 /* -onGrabFinish:errorCode: 这类 (对象, 整数) 的 void 方法 */
 static void QQHBT_void_id_q(id self, SEL _cmd, id a1, long long a2) {
     if (!QQHBBefore(self, _cmd, a1)) return;
-    IMP o = QQHBOriginalFor(_cmd);
+    IMP o = QQHBOriginalFor(self, _cmd);
     if (o) ((void (*)(id, SEL, id, long long))o)(self, _cmd, a1, a2);
     QQHBAfter(self, _cmd, a1, nil);
 }
@@ -731,7 +755,13 @@ static BOOL QQHBInstallHook(Class cls, SEL sel) {
 
     IMP orig = NULL;
     gMSHookMessageEx(cls, sel, tramp, &orig);
-    if (orig) gOriginals[NSStringFromSelector(sel)] = [NSValue valueWithPointer:orig];
+    if (orig) {
+        NSString *origKey = [NSString stringWithFormat:@"%s|%s", class_getName(cls), sel_getName(sel)];
+        gOriginals[origKey] = [NSValue valueWithPointer:orig];
+        /* 兜底 key，供找不到精确类时使用 */
+        NSString *fallback = [NSString stringWithFormat:@"*|%s", sel_getName(sel)];
+        if (!gOriginals[fallback]) gOriginals[fallback] = [NSValue valueWithPointer:orig];
+    }
     [gHooked addObject:key];
     QQHBLog(@"[已 hook] -[%@ %@]", NSStringFromClass(cls), NSStringFromSelector(sel));
     return YES;
