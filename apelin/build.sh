@@ -78,6 +78,11 @@ mkdir -p "${LIBDIR:?}" "$stage$PREFIX/DEBIAN"
 cp "${work:?}/$NAME.dylib" "${LIBDIR:?}/$NAME.dylib"
 cp "Resources/$NAME.plist" "${LIBDIR:?}/$NAME.plist"
 
+# roothide 靠这个链接把 AutoPatches 一起注入，缺了 tweak 不会加载
+if [ "$APELIN_BOOTSTRAP" = "roothide" ]; then
+    ln -s /usr/lib/DynamicPatches/AutoPatches.dylib "${LIBDIR:?}/$NAME.dylib.roothidepatch"
+fi
+
 cat > "$stage$PREFIX/DEBIAN/control" <<EOF
 Package: $PACKAGE
 Name: QQ 抢红包
