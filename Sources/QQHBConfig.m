@@ -121,12 +121,14 @@ static NSDictionary *QQHBDefaultConfig(void) {
         }
     }
     if (out.count == 0) {
-        /* 9.3.x 上诊断出来的抢包方法，config.json 没写时用这份 */
+        /* 9.3.x 上诊断出来的真实入口：QQWallet 的抢包 API */
         return @[
-            @{@"class": @"QQWalletRedPackManager",
-              @"selector": @"grabHBParams:password:checkInfo:redPack:"},
-            @{@"class": @"QQWalletRedPackManager",
-              @"selector": @"grabCommandRedPack:input:checkInfo:"}
+            @{@"class": @"QQWallet",
+              @"selector": @"grabRedPack:params:completion:"},
+            @{@"class": @"QQWallet",
+              @"selector": @"grabHB:params:completion:"},
+            @{@"class": @"QQWalletGrapHBService",
+              @"selector": @"buildPreGrabReqWithAIOData:"}
         ];
     }
     return out;
