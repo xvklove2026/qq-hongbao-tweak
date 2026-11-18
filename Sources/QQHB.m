@@ -469,6 +469,45 @@ static void QQHBAutoGrabFromModel(id model) {
 - (void)tailButtonClicked:(id)sender;
 @end
 
+static void QQHBScheduleTaps(id view, id model, int left);
+
+static void QQHBTapOnce(id view, id model, const char *tag) {
+    id openState = nil;
+    @try { openState = [model valueForKey:@"openState"]; } @catch (__unused NSException *e) {}
+    if ([openState isKindOfClass:[NSNumber class]] && [openState integerValue] != 0) return;
+
+    id button = nil;
+    @try { button = [view valueForKey:@"openButton"]; } @catch (__unused NSException *e) {}
+    SEL sel = NSSelectorFromString(@"sendActionsForControlEvents:");
+    if (button && [button respondsToSelector:sel]) {
+        [(QQHBTouchButton *)button sendActionsForControlEvents:(1UL << 6)];
+        QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] %s click openButton", tag]);
+        return;
+    }
+    id shade = nil;
+    @try { shade = [view valueForKey:@"openShadeView"]; } @catch (__unused NSException *e) {}
+    if (shade && [shade respondsToSelector:sel]) {
+        [(QQHBTouchButton *)shade sendActionsForControlEvents:(1UL << 6)];
+        QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] %s click openShadeView", tag]);
+        return;
+    }
+    if ([view respondsToSelector:NSSelectorFromString(@"tailButtonClicked:")]) {
+        [(id<QQHBTailClickable>)view tailButtonClicked:nil];
+        QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] %s call tailButtonClicked:", tag]);
+        return;
+    }
+    QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] %s 无可点击入口", tag]);
+}
+
+static void QQHBScheduleTaps(id view, id model, int left) {
+    if (left <= 0) return;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        QQHBTapOnce(view, model, "retry");
+        QQHBScheduleTaps(view, model, left - 1);
+    });
+}
+
 /* 红包卡片出现时：判断该不该抢，然后模拟点击「开」按钮 */
 static void QQHBAutoGrab(id view, id model) {
     QQHBConfig *cfg = [QQHBConfig shared];
@@ -506,27 +545,8 @@ static void QQHBAutoGrab(id view, id model) {
                                       [NSDate date], NSStringFromClass([view class])]);
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_MSEC)),
                    dispatch_get_main_queue(), ^{
-        id button = nil;
-        @try { button = [view valueForKey:@"openButton"]; } @catch (__unused NSException *e) {}
-        if (button) {
-            SEL sel = NSSelectorFromString(@"sendActionsForControlEvents:");
-            if ([button respondsToSelector:sel]) {
-                QQHBLog(@"[抢] 点击 openButton");
-                QQHBAppendText(@"structure.txt", @"[抢] 点击 openButton");
-                [(QQHBTouchButton *)button sendActionsForControlEvents:(1UL << 6)];
-                return;
-            }
-        }
-        /* 备用：直接调用卡片的点击处理 */
-        SEL tailSel = NSSelectorFromString(@"tailButtonClicked:");
-        if ([view respondsToSelector:tailSel]) {
-            QQHBLog(@"[抢] 调用 tailButtonClicked:");
-            QQHBAppendText(@"structure.txt", @"[抢] 调用 tailButtonClicked:");
-            [(id<QQHBTailClickable>)view tailButtonClicked:nil];
-            return;
-        }
-        QQHBLog(@"[抢] 没有 openButton / tailButtonClicked");
-        QQHBAppendText(@"structure.txt", @"[抢] 没有 openButton / tailButtonClicked");
+        QQHBTapOnce(view, model, "first");
+        QQHBScheduleTaps(view, model, 8);
     });
 }
 
