@@ -12,7 +12,9 @@ PREFIX="${APELIN_PREFIX:-}"
 # 版本号用时间戳：0.1.<YYMMDDHHMMSS>，每次构建必然比上一次大，dpkg/Sileo 不会跳过
 cd "${APELIN_PROJECT_ROOT:?}"
 VERSION="0.1.$(date +%y%m%d%H%M%S)"
+GITREV="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 echo "package version: $VERSION"
+echo "source commit: $GITREV"
 
 # Apelin 通过 SDKROOT 给 SDK；Mac / GitHub runner 上没有，用 xcrun 取
 SYSROOT="${SDKROOT:-}"
@@ -32,6 +34,7 @@ cd "${APELIN_PROJECT_ROOT:?}"
 SOURCES="Sources/QQHB.m Sources/QQHBConfig.m Sources/QQHBStats.m"
 COMMON="-fobjc-arc -Os -Wall -Wno-unused-parameter -fvisibility=hidden -I Sources"
 COMMON="$COMMON -DAPELIN_BUILD_ID=\"\\\"$APELIN_BUILD_ID\\\"\""
+COMMON="$COMMON -DQQHB_GIT_REV=\"\\\"$GITREV\\\"\""
 COMMON="$COMMON -DQQHB_SUBSYSTEM=\"\\\"$PACKAGE\\\"\""
 
 mkdir -p "${APELIN_PACKAGE_DIR:?}"

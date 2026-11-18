@@ -9,6 +9,9 @@
 #ifndef APELIN_BUILD_ID
 #define APELIN_BUILD_ID "dev"
 #endif
+#ifndef QQHB_GIT_REV
+#define QQHB_GIT_REV "unknown"
+#endif
 
 static NSString *const kQQHBStatsFileName = @"stats.json";
 
@@ -621,6 +624,6 @@ void QQHBStart(void) {
 
 __attribute__((constructor)) static void QQHBInit(void) {
     QQHBLog(@"ApelinLoaded %s", APELIN_BUILD_ID);
-    QQHBLog(@"QQ抢红包载入 pid=%d", (int)getpid());
+    QQHBLog(@"QQ抢红包载入 pid=%d rev=%s", (int)getpid(), QQHB_GIT_REV);
     dispatch_async(dispatch_get_main_queue(), ^{ QQHBStart(); });
 }
