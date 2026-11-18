@@ -376,6 +376,10 @@ static void QQHBT_void_0(id self, SEL _cmd) {
     QQHBAfter(self, _cmd, nil, nil);
 }
 
+@interface QQHBTouchButton : NSObject
+- (void)sendActionsForControlEvents:(unsigned long)events;
+@end
+
 static NSMutableSet<NSString *> *gAutoGrabbed;
 
 /* 红包卡片出现时：判断该不该抢，然后模拟点击「开」按钮 */
@@ -422,7 +426,7 @@ static void QQHBAutoGrab(id view, id model) {
         SEL sel = NSSelectorFromString(@"sendActionsForControlEvents:");
         if (![button respondsToSelector:sel]) return;
         QQHBLog(@"[抢] 点击 openButton");
-        ((void (*)(id, SEL, unsigned long))objc_msgSend)(button, sel, (1UL << 6));
+        [(QQHBTouchButton *)button sendActionsForControlEvents:(1UL << 6)];
     });
 }
 
