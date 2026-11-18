@@ -254,8 +254,11 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
     NSString *why = nil;
     id packet = target ?: arg;
     if (cfg.diagnose) {
-        QQHBLog(@"[诊断] -[%@ %@] 标题=%@", NSStringFromClass([target class]),
-                NSStringFromSelector(sel), QQHBTitle(packet) ?: @"(无)");
+        QQHBLog(@"[诊断] -[%@ %@] 标题=%@ QQ=%@ 类型=%@",
+                NSStringFromClass([target class]), NSStringFromSelector(sel),
+                QQHBTitle(packet) ?: @"(无)",
+                QQHBStringOf(QQHBKVCFirst(packet, QQHBUinKeys())) ?: @"(无)",
+                QQHBTypeValue(packet) ?: @"(无)");
     }
     if (QQHBDecide(packet, &why)) {
         QQHBLog(@"[跳过] -[%@ %@] 原因:%@ 标题:%@", NSStringFromClass([target class]),
@@ -336,6 +339,37 @@ static id QQHBT_id_2(id self, SEL _cmd, id a1, id a2) {
     return r;
 }
 
+static void QQHBT_void_3(id self, SEL _cmd, id a1, id a2, id a3) {
+    if (!QQHBBefore(self, _cmd, a1)) return;
+    IMP o = QQHBOriginalFor(_cmd);
+    if (o) ((void (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, a3);
+    QQHBAfter(self, _cmd, a1, nil);
+}
+
+static id QQHBT_id_3(id self, SEL _cmd, id a1, id a2, id a3) {
+    if (!QQHBBefore(self, _cmd, a1)) return nil;
+    IMP o = QQHBOriginalFor(_cmd);
+    id r = o ? ((id (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, a3) : nil;
+    QQHBAfter(self, _cmd, a1, r);
+    return r;
+}
+
+static void QQHBT_void_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
+    /* grabHBParams:password:checkInfo:redPack: —— 红包对象在最后一个参数 */
+    if (!QQHBBefore(self, _cmd, a4 ?: a1)) return;
+    IMP o = QQHBOriginalFor(_cmd);
+    if (o) ((void (*)(id, SEL, id, id, id, id))o)(self, _cmd, a1, a2, a3, a4);
+    QQHBAfter(self, _cmd, a4 ?: a1, nil);
+}
+
+static id QQHBT_id_4(id self, SEL _cmd, id a1, id a2, id a3, id a4) {
+    if (!QQHBBefore(self, _cmd, a4 ?: a1)) return nil;
+    IMP o = QQHBOriginalFor(_cmd);
+    id r = o ? ((id (*)(id, SEL, id, id, id, id))o)(self, _cmd, a1, a2, a3, a4) : nil;
+    QQHBAfter(self, _cmd, a4 ?: a1, r);
+    return r;
+}
+
 /* 按类型编码挑跳板：无法安全处理就返回 NULL，宁可不 hook 也不搞乱返回寄存器 */
 static IMP QQHBTrampolineFor(Method m) {
     const char *enc = method_getTypeEncoding(m);
@@ -366,11 +400,15 @@ static IMP QQHBTrampolineFor(Method m) {
         if (argc == 0) return (IMP)QQHBT_void_0;
         if (argc == 1) return (IMP)QQHBT_void_1;
         if (argc == 2) return (IMP)QQHBT_void_2;
+        if (argc == 3) return (IMP)QQHBT_void_3;
+        if (argc == 4) return (IMP)QQHBT_void_4;
         return NULL;
     }
     if (ret == '@') {
         if (argc == 1) return (IMP)QQHBT_id_1;
         if (argc == 2) return (IMP)QQHBT_id_2;
+        if (argc == 3) return (IMP)QQHBT_id_3;
+        if (argc == 4) return (IMP)QQHBT_id_4;
         return NULL;
     }
     if (ret == 'B' || ret == 'c') {

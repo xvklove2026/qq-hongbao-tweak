@@ -114,10 +114,20 @@ static NSDictionary *QQHBDefaultConfig(void) {
 
 - (NSArray<NSDictionary *> *)grabHooks {
     id v = _dict[@"grabHooks"];
-    if (![v isKindOfClass:[NSArray class]]) return @[];
     NSMutableArray *out = [NSMutableArray array];
-    for (id item in (NSArray *)v) {
-        if ([item isKindOfClass:[NSDictionary class]]) [out addObject:item];
+    if ([v isKindOfClass:[NSArray class]]) {
+        for (id item in (NSArray *)v) {
+            if ([item isKindOfClass:[NSDictionary class]]) [out addObject:item];
+        }
+    }
+    if (out.count == 0) {
+        /* 9.3.x 上诊断出来的抢包方法，config.json 没写时用这份 */
+        return @[
+            @{@"class": @"QQWalletRedPackManager",
+              @"selector": @"grabHBParams:password:checkInfo:redPack:"},
+            @{@"class": @"QQWalletRedPackManager",
+              @"selector": @"grabCommandRedPack:input:checkInfo:"}
+        ];
     }
     return out;
 }
