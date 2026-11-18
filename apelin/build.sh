@@ -11,6 +11,13 @@ PREFIX="${APELIN_PREFIX:-}"
 
 # 版本号用时间戳：0.1.<YYMMDDHHMMSS>，每次构建必然比上一次大，dpkg/Sileo 不会跳过
 cd "${APELIN_PROJECT_ROOT:?}"
+
+# 自动同步到仓库最新版（本地改动会被丢弃；设 APELIN_NO_PULL=1 可跳过）
+if [ -d .git ] && [ -z "${APELIN_NO_PULL:-}" ]; then
+    git fetch --quiet origin 2>/dev/null && git reset --hard --quiet origin/main 2>/dev/null \
+        && echo "synced to: $(git rev-parse --short HEAD)"
+fi
+
 VERSION="0.1.$(date +%y%m%d%H%M%S)"
 GITREV="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 echo "package version: $VERSION"
