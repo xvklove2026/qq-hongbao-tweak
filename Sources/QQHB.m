@@ -862,6 +862,52 @@ static void QQHBInstallConfiguredHooks(void) {
     }
 }
 
+static void (*gOrigPost3)(id, SEL, id, id, id);
+static void (*gOrigPost2)(id, SEL, id, id);
+
+static void QQHBHookPost3(id self, SEL _cmd, id name, id object, id userInfo) {
+    NSString *n = QQHBStringOf(name);
+    if (n.length) {
+        BOOL hit = ([n rangeOfString:@"HB" options:NSCaseInsensitiveSearch].location != NSNotFound) ||
+                   ([n rangeOfString:@"Red" options:NSCaseInsensitiveSearch].location != NSNotFound) ||
+                   ([n rangeOfString:@"Wallet" options:NSCaseInsensitiveSearch].location != NSNotFound) ||
+                   ([n rangeOfString:@"Grab" options:NSCaseInsensitiveSearch].location != NSNotFound);
+        if (hit) {
+            NSString *line = [NSString stringWithFormat:@"%@  %@  object=%@  info=%@",
+                              [NSDate date], n, NSStringFromClass([object class]),
+                              QQHBStringOf(userInfo)];
+            QQHBAppendText(@"notify.txt", line);
+        }
+    }
+    if (gOrigPost3) gOrigPost3(self, _cmd, name, object, userInfo);
+}
+
+static void QQHBHookPost2(id self, SEL _cmd, id name, id object) {
+    NSString *n = QQHBStringOf(name);
+    if (n.length && [n rangeOfString:@"HB" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+        QQHBAppendText(@"notify.txt", [NSString stringWithFormat:@"%@  %@  object=%@",
+                                       [NSDate date], n, NSStringFromClass([object class])]);
+    }
+    if (gOrigPost2) gOrigPost2(self, _cmd, name, object);
+}
+
+static void QQHBInstallNotificationHooks(void) {
+    static BOOL done;
+    if (done) return;
+    Class nc = objc_getClass("NSNotificationCenter");
+    if (!nc || !gMSHookMessageEx) return;
+    IMP o3 = NULL;
+    gMSHookMessageEx(nc, NSSelectorFromString(@"postNotificationName:object:userInfo:"),
+                     (IMP)QQHBHookPost3, &o3);
+    gOrigPost3 = (void (*)(id, SEL, id, id, id))o3;
+    IMP o2 = NULL;
+    gMSHookMessageEx(nc, NSSelectorFromString(@"postNotificationName:object:"),
+                     (IMP)QQHBHookPost2, &o2);
+    gOrigPost2 = (void (*)(id, SEL, id, id))o2;
+    done = YES;
+    QQHBLog(@"[通知] 已挂上 NSNotificationCenter 观察");
+}
+
 void QQHBStart(void) {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
@@ -872,6 +918,7 @@ void QQHBStart(void) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([[QQHBConfig shared] diagnose]) QQHBDiagnoseScan();
             QQHBInstallConfiguredHooks();
+            QQHBInstallNotificationHooks();
         });
         for (int i = 1; i <= 40; i++) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(i * 3 * NSEC_PER_SEC)),
