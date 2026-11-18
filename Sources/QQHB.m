@@ -431,13 +431,36 @@ static id QQHBT_id_2(id self, SEL _cmd, id a1, id a2) {
     return r;
 }
 
+typedef void (^QQHBGrabCompletion)(int, id);
+
 static void QQHBT_void_3(id self, SEL _cmd, id a1, id a2, id a3) {
     QQHBDumpObject("v3-arg1", a1);
     QQHBDumpObject("v3-arg2", a2);
     QQHBDumpObject("v3-arg3", a3);
     if (!QQHBBefore(self, _cmd, a1)) return;
     IMP o = QQHBOriginalFor(_cmd);
-    if (o) ((void (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, a3);
+    if (!o) return;
+
+    /* grabRedPack:params:completion: —— 把 completion 包一层，抓抢包结果（金额） */
+    NSString *selName = NSStringFromSelector(_cmd);
+    if ([selName isEqualToString:@"grabRedPack:params:completion:"] ||
+        [selName isEqualToString:@"grabHB:params:completion:"]) {
+        QQHBGrabCompletion orig = (QQHBGrabCompletion)a3;
+        if (orig) {
+            QQHBGrabCompletion wrapper = ^(int code, id resp) {
+                NSString *line = [NSString stringWithFormat:
+                    @"grab结果 %@ code=%d resp=%@", selName, code, resp];
+                QQHBLog(@"%@", line);
+                QQHBAppendText(@"structure.txt", line);
+                orig(code, resp);
+            };
+            ((void (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, (id)wrapper);
+            QQHBAfter(self, _cmd, a1, nil);
+            return;
+        }
+    }
+
+    ((void (*)(id, SEL, id, id, id))o)(self, _cmd, a1, a2, a3);
     QQHBAfter(self, _cmd, a1, nil);
 }
 
@@ -487,6 +510,13 @@ static IMP QQHBTrampolineFor(Method m) {
         char c = *p;
         if (isdigit((unsigned char)c) || c == '-' || c == '+' || c == 'r' || c == 'n' || c == 'N' ||
             c == 'o' || c == 'O' || c == 'R' || c == 'V') {
+            continue;
+        }
+        if (c == '@' && p[1] == '?') {
+            /* block：@? 是一个整体 */
+            if (expectRet) { ret = '@'; expectRet = NO; }
+            else { [types addObject:@('@')]; }
+            p++;
             continue;
         }
         if (expectRet) { ret = c; expectRet = NO; continue; }
