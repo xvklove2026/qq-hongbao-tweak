@@ -1,0 +1,285 @@
+macOS 26.7.2 全新系统 —— 搭建与配合说明
+========================================
+
+前提：以下每块命令都是「复制粘贴到 终端(Terminal) 回车」即可。
+      遇到 $ 开头的是提示符，不要复制 $。
+      整个过程大约 20～40 分钟，主要时间在下载。
+
+
+第 0 步：需要准备的东西
+----------------------
+- 一台 macOS 26.7.2 的电脑（Intel 或 Apple 芯片都行，脚本对两种都能编）
+- 你的 iPhone 已经越狱（roothide 或 rootless 都行，脚本会分别出两个包）
+- 网络能上 GitHub
+
+不需要：Xcode 全量安装（可选，见 1-B）、不需要 Mac 上装越狱环境。
+
+
+第 1 步：装命令行工具（必做）
+----------------------------
+1-A 只装 Command Line Tools（推荐，约 1.5GB）
+    终端里执行：
+
+        xcode-select --install
+
+    弹窗点「安装」，等它装完。装完验证：
+
+        clang --version
+        make --version
+
+    两条都有版本号输出就对了。
+
+1-B（可选）装完整 Xcode
+    如果你已经有 App Store 里的 Xcode（十几 GB），那更好：它会自带 iPhoneOS
+    SDK，第 3 步就可以跳过。
+    装完执行一次，把许可和路径绑定好：
+
+        sudo xcode-select -s /Applications/Xcode.app
+        sudo xcodebuild -license accept
+
+    验证：
+
+        xcrun --sdk iphoneos --show-sdk-path
+
+    能打印出一个 .../iPhoneOSxx.sdk 的路径 → 说明第 3 步可以跳过。
+    报错 → 乖乖做第 3 步。
+
+
+第 2 步：装 Homebrew 和两个小工具
+--------------------------------
+2-1 装 Homebrew（如果还没有）：
+
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    Apple 芯片装完它会提示你把 brew 加进 PATH，照它给的命令执行一次，
+    通常是：
+
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+
+2-2 装 dpkg（提供 dpkg-deb，用来打 deb）和 libplist（ldid 依赖）：
+
+        brew install dpkg libplist
+
+    验证：
+
+        dpkg-deb --version
+
+    有版本号就对了。
+
+
+第 3 步：拿 iPhoneOS SDK（没装完整 Xcode 就必做）
+-----------------------------------------------
+必须是 iPhoneOS 的 SDK，macOS 自带的 MacOSX SDK 编不出 iOS 的包。
+
+        mkdir -p ~/sdk
+        git clone --depth 1 --filter=blob:none --sparse \
+          https://github.com/theos/sdks.git ~/sdk/sdks
+        cd ~/sdk/sdks
+        git sparse-checkout set iPhoneOS16.5.sdk
+        cd ~
+
+    只下 16.5 这一个，约 200MB。验证：
+
+        ls ~/sdk/sdks/iPhoneOS16.5.sdk/System/Library/Frameworks/Foundation.framework
+
+    能看到 Foundation 就对了。
+
+
+第 4 步：编 ldid（给 dylib 签名，必须有）
+--------------------------------------
+        git clone --depth 1 https://github.com/ProcursusTeam/ldid.git ~/ldid
+        cd ~/ldid
+        make -j$(sysctl -n hw.ncpu)
+        sudo install -m755 ./ldid /usr/local/bin/ldid
+        cd ~
+
+    如果 make 报找不到 libplist 的头文件，换成这句再编：
+
+        make clean && make -j$(sysctl -n hw.ncpu) \
+          CPPFLAGS="-I$(brew --prefix)/include" \
+          LDFLAGS="-L$(brew --prefix)/lib"
+        sudo install -m755 ./ldid /usr/local/bin/ldid
+
+    如果还不行，用自带实现编（不依赖 libplist）：
+
+        make clean && make -j$(sysctl -n hw.ncpu) LDID_LIBPLIST=0
+        sudo install -m755 ./ldid /usr/local/bin/ldid
+
+    验证：
+
+        ldid -h
+
+    有用法输出就对了。
+
+
+第 5 步：拉工程
+--------------
+        cd ~
+        git clone https://github.com/xvklove2026/qq-hongbao-tweak.git
+        cd qq-hongbao-tweak
+
+    你会看到 Sources/、Resources/、apelin/build.sh 等。
+
+
+第 6 步：编译
+------------
+6-A 如果你**有完整 Xcode**（第 1-B 做了）：
+
+        export APELIN_PROJECT_ROOT="$PWD"
+        export APELIN_BOOTSTRAP=roothide
+        export APELIN_ARCHITECTURE=iphoneos-arm64e
+        export APELIN_PREFIX=
+        export APELIN_BUILD_ID=local
+        export APELIN_PACKAGE_DIR="$PWD/out"
+        export TMPDIR="$(mktemp -d)"
+        chmod +x apelin/build.sh
+        ./apelin/build.sh
+
+    这种情况下脚本会自己用 xcrun 找到 iPhoneOS SDK。
+
+6-B 如果你**只有 Command Line Tools**（更常见）：
+
+        export SDKROOT="$HOME/sdk/sdks/iPhoneOS16.5.sdk"
+        export APELIN_PROJECT_ROOT="$PWD"
+        export APELIN_BOOTSTRAP=roothide
+        export APELIN_ARCHITECTURE=iphoneos-arm64e
+        export APELIN_PREFIX=
+        export APELIN_BUILD_ID=local
+        export APELIN_PACKAGE_DIR="$PWD/out"
+        export TMPDIR="$(mktemp -d)"
+        chmod +x apelin/build.sh
+        ./apelin/build.sh
+
+6-C 如果你的越狱是 rootless（Dopamine / palera1n rootless 等），
+    把上面两行改掉即可：
+
+        export APELIN_BOOTSTRAP=rootless
+        export APELIN_ARCHITECTURE=iphoneos-arm64
+        export APELIN_PREFIX=/var/jb
+
+成功的样子：最后一行会打印 deb 文件名，例如
+
+        com.yg.qqhongbao_0.1.0_iphoneos-arm64e.deb
+
+文件在 qq-hongbao-tweak/out/ 里。
+
+失败的话：把终端里**最后 30 行**整段复制发我（不要截图，文字更好），
+我改脚本。目前已知 CI 上最后卡在 `ld: framework not found Foundation`，
+macOS 上因为 SDK 是真的 Apple SDK，正常不应该出现；真出现就是这个路径问题，
+我这边改 build.sh 的 -F 参数。
+
+
+第 7 步：装到手机
+----------------
+任选一种：
+
+7-A AirDrop（最简单）
+    右键 out/ 里的 deb → 共享 → AirDrop → 选你的 iPhone。
+    手机上「文件」App 里会出现，用 Filza 打开并安装；
+    或者在 Sileo 里手动安装（部分版本直接点 deb 就行）。
+
+7-B 用 SSH（手机装了 OpenSSH 的话）
+        scp out/*.deb root@<手机IP>:/var/mobile/Downloads/
+    然后在手机上用 Filza 点开安装，或者 SSH 登录后：
+
+        dpkg -i /var/mobile/Downloads/com.yg.qqhongbao_*.deb
+
+    （roothide 越狱用 irisin-cli 或 Sileo 更稳妥，别直接 dpkg -i）
+
+7-C 起个本地服务器
+        cd out && python3 -m http.server 8000
+    手机浏览器打开 http://<电脑IP>:8000/ ，下载 deb 后用 Filza 装。
+
+装完杀掉 QQ 再打开（不需要重启手机）。
+
+
+第 8 步：验证注入成功
+--------------------
+1. 打开 QQ，随便进一个聊天窗口，停 10 秒。
+2. 回来告诉我说「装好了，QQ 已经打开过」。
+3. 我这边读系统日志（subsystem com.yg.qqhongbao），能看到这样的行就成功：
+
+        ApelinLoaded 1a2b3c4d
+        QQ抢红包载入 pid=1234
+
+如果我看不到，说明没注入（没装成功 / 过滤的 bundle id 不对 / 越狱注入框架没起来），
+我再带你查。
+
+
+第 9 步：配置（我帮你改，你也可以自己改）
+--------------------------------------
+配置在手机 QQ 沙盒里，第一次启动 QQ 时自动生成：
+
+    /var/mobile/Containers/Data/Application/<UUID>/Library/Application Support/QQHongbao/config.json
+
+找 UUID：Filza 搜索 QQHongbao。
+
+字段含义（详见 使用说明.txt）：
+
+    enabled            总开关
+    diagnose           诊断模式，默认 true（只记录不抢）
+    grabOwnPackets     自己发的也抢
+    skipExclusive      专属红包不抢
+    skipTitleKeywords  标题含这些词不抢，默认 ["专属","测试"]
+    grabKeywords       白名单，非空时标题必须命中
+    delayMs/delayMaxMs 随机延迟（毫秒）
+    selfUin            你的 QQ 号
+    exclusiveTypes     视为专属的类型值
+    grabHooks          真正抢包的方法（关键，见下）
+
+
+第 10 步：定 hook 点（最关键的一步，必须一起做）
+--------------------------------------------
+现在 grabHooks 是空的 —— 空着的时候插件只做诊断和记录，不会去抢。
+原因：QQ 的红包类名和方法名每个版本都不一样，我不能瞎猜。
+
+流程：
+  1. 你保持 diagnose: true，正常用 QQ，进有红包的群，等一个红包出现。
+  2. 告诉我「刚才有红包了」+ 大概是几点几分。
+  3. 我读日志，里面会出现：
+
+        [诊断] 类 QQWalletRedPackXXX 候选方法:
+               grabRedPack: v24@0:8@16 | openRedPacket: v28@0:8@16@24
+
+  4. 我从里面挑出真正的抢包方法，写进你的 config.json 的 grabHooks，
+     并把 diagnose 改成 false。
+  5. 你再等一个红包，看能不能抢到、stats.txt 里有没有记录。
+  6. 抢错了（比如专属被抢）就把现象告诉我，我调字段判断。
+
+
+你需要提供给我的（就这几样）
+--------------------------
+1. 手机上 QQ 的版本号：QQ → 设置 → 关于QQ
+2. 编译时如果有报错：终端最后 30 行文字
+3. 出问题时的现象和时间点，例如「8:20 左右群里一个普通红包没抢」
+4. 如果 QQ 闪退：说一声时间，我读崩溃报告
+
+不要提供：QQ 账号密码、聊天内容、验证码。真不需要。
+
+
+常见问题
+--------
+Q: 为什么我在 CI 上一直失败，你在 Mac 上就能过？
+A: 因为 CI 是 Linux 交叉编译，缺 Apple 的链接器和完整 framework 布局；
+   macOS 上 clang/ld/SDK 都是原生的，一次就能链上。
+
+Q: 编译报 clang: command not found
+A: 第 1 步没做完，重新执行 xcode-select --install。
+
+Q: 报 iostream not found / C++ 头文件找不到
+A: 说明只装了 CLT 而且 Homebrew 的 include 挡住了系统头。执行：
+       sudo rm -rf /Library/Developer/CommandLineTools
+       xcode-select --install
+   重装一次 CLT。
+
+Q: 报 ld: framework not found Foundation
+A: SDK 路径不对。确认 SDKROOT 指向的目录里确实有
+   System/Library/Frameworks/Foundation.framework，没有就重做第 3 步。
+
+Q: 报 ldid: command not found
+A: 第 4 步没装成，或者 /usr/local/bin 不在 PATH。用 which ldid 检查。
+
+Q: 出了包但手机装不上
+A: 检查越狱类型和包类型是否匹配（roothide 用 arm64e 包，rootless 用 arm64 包），
+   用 Sileo 装而不是直接 dpkg -i。
