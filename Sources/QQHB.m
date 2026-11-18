@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #import "QQHB.h"
 #import "QQHBConfig.h"
 #import "QQHBStats.h"
@@ -378,6 +379,10 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
                                       class_getName([target class]),
                                       sel_getName(sel),
                                       arg ? NSStringFromClass([arg class]) : @"nil"]);
+        const char *selC = sel_getName(sel);
+        if (strstr(selC, "ReserveData") || strstr(selC, "reserveData")) {
+            QQHBDumpDict("reserve", arg);
+        }
     }
 
     BOOL detailed = [cfg isConfiguredSelector:sel] || [cfg isObserveSelector:sel];
