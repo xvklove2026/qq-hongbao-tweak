@@ -1,0 +1,20 @@
+  /bin/bash ../../../libtool   --mode=install /usr/bin/install -c ld '/usr/local/bin/./aarch64-apple-darwin-ld'
+libtool: install: /usr/bin/install -c ld /usr/local/bin/./aarch64-apple-darwin-ld
+ /usr/bin/install -c -m 644 'man1/ld64.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ld64.1'
+ /usr/bin/install -c -m 644 'man1/ld.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ld.1'
+ /usr/bin/install -c -m 644 'man1/ld-classic.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ld-classic.1'
+-rwxr-xr-x 1 root   root     4740992 Nov 18 05:09 aarch64-apple-darwin-ld
+mode: undefined dynamic lookup (no framework at link time)
+SYSROOT=/tmp/sdks/iPhoneOS16.5.sdk
+frameworks:
+ARKit.framework
+AVFAudio.framework
+AVFoundation.framework
+AVKit.framework
+AVRouting.framework
+Accelerate.framework
+Accessibility.framework
+Accounts.framework
++ clang -target arm64-apple-ios16.0 -isysroot /tmp/sdks/iPhoneOS16.5.sdk --ld-path=/usr/local/bin/aarch64-apple-darwin-ld -Wl,-undefined,dynamic_lookup -fobjc-arc -Os -Wall -Wno-unused-parameter -fvisibility=hidden -I Sources -DAPELIN_BUILD_ID="\"8cca990a\"" -DQQHB_GIT_REV="\"8cca990\"" -DQQHB_SUBSYSTEM="\"com.yg.qqhongbao\"" -DAPELIN_BOOTSTRAP_ROOTLESS=1 Sources/QQHB.m Sources/QQHBConfig.m Sources/QQHBStats.m
+ld: framework not found Foundation
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
