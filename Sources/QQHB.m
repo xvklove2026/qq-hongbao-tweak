@@ -389,6 +389,7 @@ static void QQHBT_void_0(id self, SEL _cmd) {
 
 @protocol QQHBGrabCommitting <NSObject>
 - (void)grabRedPack:(id)pack params:(id)params completion:(id)completion;
+- (void)grabHB:(id)pack params:(id)params completion:(id)completion;
 @end
 
 static NSMutableSet<NSString *> *gAutoGrabbed;
@@ -471,10 +472,47 @@ static void QQHBAutoGrabFromModel(id model) {
 
 static void QQHBScheduleTaps(id view, id model, int left);
 
+/* 兜底：不依赖 UI，直接调 QQWallet 的抢包接口 */
+static void QQHBForceGrab(id model) {
+    QQHBAppendText(@"structure.txt", @"[抢] 尝试直接调钱包接口");
+    id params = nil;
+    for (NSString *selName in @[@"grabHBParam", @"grapRedPacketParams"]) {
+        SEL s = NSSelectorFromString(selName);
+        if (![model respondsToSelector:s]) continue;
+        @try { params = [model performSelector:s]; } @catch (__unused NSException *e) {}
+        if (params) break;
+    }
+    if (!params) {
+        QQHBAppendText(@"structure.txt", @"[抢] 模型没有抢包参数");
+        return;
+    }
+    Class walletClass = objc_getClass("QQWallet");
+    if (!walletClass) return;
+    id wallet = nil;
+    @try { wallet = [walletClass performSelector:NSSelectorFromString(@"sharedInstance")]; } @catch (__unused NSException *e) {}
+    if (!wallet) return;
+    SEL grab = NSSelectorFromString(@"grabHB:params:completion:");
+    if (![wallet respondsToSelector:grab]) return;
+    QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] 调用 grabHB params=%@",
+                                      QQHBStringOf(params)]);
+    @try {
+        [(id<QQHBGrabCommitting>)wallet grabHB:model params:params completion:nil];
+    } @catch (__unused NSException *e) {
+        QQHBAppendText(@"structure.txt", @"[抢] grabHB 抛异常");
+    }
+}
+
 static void QQHBTapOnce(id view, id model, const char *tag) {
     id openState = nil;
     @try { openState = [model valueForKey:@"openState"]; } @catch (__unused NSException *e) {}
     if ([openState isKindOfClass:[NSNumber class]] && [openState integerValue] != 0) return;
+
+    /* 优先调卡片自己的点击处理（QQ 用的是手势/卡片回调，不是按钮 action） */
+    if ([view respondsToSelector:NSSelectorFromString(@"tailButtonClicked:")]) {
+        [(id<QQHBTailClickable>)view tailButtonClicked:nil];
+        QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"[抢] %s call tailButtonClicked:", tag]);
+        return;
+    }
 
     id button = nil;
     @try { button = [view valueForKey:@"openButton"]; } @catch (__unused NSException *e) {}
@@ -504,6 +542,10 @@ static void QQHBScheduleTaps(id view, id model, int left) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         QQHBTapOnce(view, model, "retry");
+        if (left == 1) {
+            /* 点开都没成功，最后尝试直接调钱包接口 */
+            QQHBForceGrab(model);
+        }
         QQHBScheduleTaps(view, model, left - 1);
     });
 }
