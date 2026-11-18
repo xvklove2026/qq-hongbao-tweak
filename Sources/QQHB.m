@@ -472,6 +472,7 @@ static void QQHBDiagnoseScan(void) {
     NSArray *methodHints = QQHBMethodHints();
     NSUInteger logged = 0;
     NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+    NSMutableString *report = [NSMutableString string];
 
     for (unsigned int i = 0; i < count && logged < 200; i++) {
         const char *name = class_getName(classes[i]);
@@ -503,11 +504,35 @@ static void QQHBDiagnoseScan(void) {
         if (selNames.count) {
             QQHBLog(@"[诊断] 类 %@ 候选方法: %@", clsName, [selNames componentsJoinedByString:@" | "]);
             [candidates addObject:clsName];
+            [report appendFormat:@"%@ :: %@\n", clsName, [selNames componentsJoinedByString:@" | "]];
         }
     }
+
+    /* 第二遍：不管类名，凡是方法名里带 grab 的都记下来，写进文件 */
+    [report appendString:@"\n=== 选择器含 grab 的方法 ===\n"];
+    NSUInteger grabCount = 0;
+    for (unsigned int i = 0; i < count && grabCount < 400; i++) {
+        const char *name = class_getName(classes[i]);
+        if (!name) continue;
+        NSString *clsName = [NSString stringWithUTF8String:name];
+        if (!clsName) continue;
+        unsigned int mcount = 0;
+        Method *methods = class_copyMethodList(classes[i], &mcount);
+        for (unsigned int j = 0; j < mcount && grabCount < 400; j++) {
+            NSString *selName = NSStringFromSelector(method_getName(methods[j]));
+            if ([selName rangeOfString:@"grab" options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+            [report appendFormat:@"%@ %@ %s\n", clsName, selName,
+                                 method_getTypeEncoding(methods[j])];
+            grabCount++;
+        }
+        if (methods) free(methods);
+    }
     if (classes) free(classes);
-    QQHBLog(@"[诊断] 扫描完成，候选类 %lu 个，共 %lu 行。把含 RedPack/红包 的几行配置到 grabHooks 里。",
-            (unsigned long)candidates.count, (unsigned long)logged);
+
+    NSString *path = [QQHBSupportDir() stringByAppendingPathComponent:@"diag.txt"];
+    [report writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    QQHBLog(@"[诊断] 扫描完成，候选类 %lu 个，grab 方法 %lu 个，报告写在 %@",
+            (unsigned long)candidates.count, (unsigned long)grabCount, path);
 }
 
 #pragma mark - 启动
