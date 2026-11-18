@@ -27,14 +27,14 @@ FEAT_LRCPC，这颗 A11 没有；`apelin_toolchain_list` 里全部标 unavailabl
 sparse 检出 theos 的 iPhoneOS16.5.sdk → 跑 `apelin/build.sh` 出两个 deb。
 失败时把 `/tmp/build.log` 推到 `ci-log-<bootstrap>` 分支，可从 raw 读。
 
-2026-11-18 状态：源码编译通过，链接阶段还在啃：
-- `ld64.lld` 对 clang 21 生成的 ObjC 字符串段报 `INVALID relocation has width 8 bytes`。
-- 改为在 CI 里自编 cctools-port 的 ld64（需要先编 swift-corelibs-libdispatch，
-  用 `-DCMAKE_C_COMPILER=clang`），已装成 `/usr/local/bin/aarch64-apple-darwin-ld`，
-  通过 `APELIN_LD_FLAGS="--ld-path=..."` 传给 clang。
-- 当前报 `ld: framework not found Foundation`；`apelin/build.sh` 已补
-  `-F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib"`，尚未确认生效。
-- 本账号拿不到 macOS runner：`macos-14` 报 configuration not supported，`macos-13` 排不到。
+2026-11-18 状态：源码编译通过，链接仍未通：
+- `-F` 已确认传对，SDK 里 Foundation.framework 只有 `Foundation.tbd`；
+  自编 ld64 没有 TAPI，读不了 .tbd → `framework not found Foundation`。
+- 已改试 `-undefined dynamic_lookup`（不链 framework）+ `-fno-autolink`
+  （`-fmodules` 会自动给 clang 塞 `-framework Foundation`），仍未通过，
+  精简日志 `ci-log-errors.txt` 里只剩 `clang: error: linker command failed`，
+  ld 的具体报错不在过滤结果里，需要看原始 `ci-log.txt` 尾部。
+- macOS 原生构建不存在这些问题（Xcode 的 ld 支持 tbd），优先走 Mac。
 
 CI 失败时会把 `/tmp/build.log` 尾部 20KB 推到 `ci-log-<bootstrap>` 分支。
 
