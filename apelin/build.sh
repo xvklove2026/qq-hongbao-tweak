@@ -62,7 +62,12 @@ run_clang() {
 }
 
 if [ "$APELIN_BOOTSTRAP" = "roothide" ]; then
-    run_clang arm64e "${work:?}/$NAME.dylib" $COMMON -DAPELIN_BOOTSTRAP_ROOTHIDE=1 $SOURCES
+    COMMON="$COMMON -DAPELIN_BOOTSTRAP_ROOTHIDE=1"
+    # ElleKit/roothide 加载瘦 arm64e 会失败，必须给 fat（arm64 + arm64e）
+    run_clang arm64 "${work:?}/$NAME.arm64.dylib" $COMMON $SOURCES
+    run_clang arm64e "${work:?}/$NAME.arm64e.dylib" $COMMON $SOURCES
+    lipo -create "${work:?}/$NAME.arm64.dylib" "${work:?}/$NAME.arm64e.dylib" \
+        -output "${work:?}/$NAME.dylib"
 else
     COMMON="$COMMON -DAPELIN_BOOTSTRAP_ROOTLESS=1"
     run_clang arm64 "${work:?}/$NAME.arm64.dylib" $COMMON $SOURCES
