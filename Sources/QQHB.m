@@ -465,6 +465,10 @@ static void QQHBAutoGrabFromModel(id model) {
 - (void)sendActionsForControlEvents:(unsigned long)events;
 @end
 
+@protocol QQHBTailClickable <NSObject>
+- (void)tailButtonClicked:(id)sender;
+@end
+
 /* 红包卡片出现时：判断该不该抢，然后模拟点击「开」按钮 */
 static void QQHBAutoGrab(id view, id model) {
     QQHBConfig *cfg = [QQHBConfig shared];
@@ -498,18 +502,31 @@ static void QQHBAutoGrab(id view, id model) {
 
     NSInteger delay = QQHBRandomDelay();
     QQHBLog(@"[抢] 卡片出现，%ldms 后点开", (long)delay);
+    QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"%@ [抢] 卡片出现 %@",
+                                      [NSDate date], NSStringFromClass([view class])]);
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_MSEC)),
                    dispatch_get_main_queue(), ^{
         id button = nil;
         @try { button = [view valueForKey:@"openButton"]; } @catch (__unused NSException *e) {}
-        if (!button) {
-            QQHBLog(@"[抢] 没找到 openButton");
+        if (button) {
+            SEL sel = NSSelectorFromString(@"sendActionsForControlEvents:");
+            if ([button respondsToSelector:sel]) {
+                QQHBLog(@"[抢] 点击 openButton");
+                QQHBAppendText(@"structure.txt", @"[抢] 点击 openButton");
+                [(QQHBTouchButton *)button sendActionsForControlEvents:(1UL << 6)];
+                return;
+            }
+        }
+        /* 备用：直接调用卡片的点击处理 */
+        SEL tailSel = NSSelectorFromString(@"tailButtonClicked:");
+        if ([view respondsToSelector:tailSel]) {
+            QQHBLog(@"[抢] 调用 tailButtonClicked:");
+            QQHBAppendText(@"structure.txt", @"[抢] 调用 tailButtonClicked:");
+            [(id<QQHBTailClickable>)view tailButtonClicked:nil];
             return;
         }
-        SEL sel = NSSelectorFromString(@"sendActionsForControlEvents:");
-        if (![button respondsToSelector:sel]) return;
-        QQHBLog(@"[抢] 点击 openButton");
-        [(QQHBTouchButton *)button sendActionsForControlEvents:(1UL << 6)];
+        QQHBLog(@"[抢] 没有 openButton / tailButtonClicked");
+        QQHBAppendText(@"structure.txt", @"[抢] 没有 openButton / tailButtonClicked");
     });
 }
 
