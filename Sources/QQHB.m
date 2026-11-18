@@ -376,11 +376,83 @@ static void QQHBT_void_0(id self, SEL _cmd) {
     QQHBAfter(self, _cmd, nil, nil);
 }
 
-@interface QQHBTouchButton : NSObject
-- (void)sendActionsForControlEvents:(unsigned long)events;
+@protocol QQHBGrabCommitting <NSObject>
+- (void)grabRedPack:(id)pack params:(id)params completion:(id)completion;
 @end
 
 static NSMutableSet<NSString *> *gAutoGrabbed;
+
+/* 从红包消息模型直接抢：params = [model grapRedPacketParams]，再调 QQWallet */
+static void QQHBAutoGrabFromModel(id model) {
+    QQHBConfig *cfg = [QQHBConfig shared];
+    if (!model) return;
+    if (cfg.diagnose) {
+        QQHBDumpObject("msgmodel", model);
+        QQHBDumpAllValues("msgmodel", model);
+    }
+    if (!cfg.enabled) return;
+
+    id openState = nil, isSelf = nil, msgId = nil;
+    @try { openState = [model valueForKey:@"openState"]; } catch (__unused NSException *e) {}
+    @try { isSelf = [model valueForKey:@"isSelfMsg"]; } catch (__unused NSException *e) {}
+    @try { msgId = [model valueForKey:@"billNo"]; } catch (__unused NSException *e) {}
+    if ([openState isKindOfClass:[NSNumber class]] && [openState integerValue] != 0) return;
+    if ([isSelf isKindOfClass:[NSNumber class]] && [isSelf boolValue] && !cfg.grabOwnPackets) {
+        QQHBLog(@"[跳过] 自己发的红包");
+        return;
+    }
+
+    NSString *key = QQHBStringOf(msgId);
+    if (!key.length) key = [NSString stringWithFormat:@"%p", model];
+    if (!gAutoGrabbed) gAutoGrabbed = [NSMutableSet set];
+    if ([gAutoGrabbed containsObject:key]) return;
+    [gAutoGrabbed addObject:key];
+
+    NSString *why = nil;
+    if (QQHBDecide(model, &why)) {
+        QQHBLog(@"[跳过] 消息模型 原因:%@", why);
+        QQHBAppendText(@"skips.txt", [NSString stringWithFormat:@"%@  模型  %@", [NSDate date], why]);
+        return;
+    }
+
+    SEL paramsSel = NSSelectorFromString(@"grapRedPacketParams");
+    if (![model respondsToSelector:paramsSel]) {
+        QQHBLog(@"[抢] 模型没有 grapRedPacketParams");
+        return;
+    }
+    id params = nil;
+    @try { params = [model performSelector:paramsSel]; } catch (__unused NSException *e) {}
+    QQHBLog(@"[抢] 抢包参数: %@", QQHBStringOf(params));
+
+    Class wallet = objc_getClass("QQWallet");
+    if (!wallet) {
+        QQHBLog(@"[抢] QQWallet 未加载");
+        return;
+    }
+    id walletObj = nil;
+    @try { walletObj = [wallet performSelector:NSSelectorFromString(@"sharedInstance")]; } catch (__unused NSException *e) {}
+    if (!walletObj) {
+        @try { walletObj = [[wallet alloc] init]; } catch (__unused NSException *e) {}
+    }
+    if (!walletObj) {
+        QQHBLog(@"[抢] 拿不到 QQWallet 实例");
+        return;
+    }
+
+    SEL grabSel = NSSelectorFromString(@"grabRedPack:params:completion:");
+    if (![walletObj respondsToSelector:grabSel]) {
+        QQHBLog(@"[抢] QQWallet 没有 grabRedPack:params:completion:");
+        return;
+    }
+    QQHBLog(@"[抢] 调用 grabRedPack 参数=%@", QQHBStringOf(params));
+    QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"%@ 自动抢 %@",
+                                      [NSDate date], key]);
+    [(id<QQHBGrabCommitting>)walletObj grabRedPack:model params:params completion:nil];
+}
+
+@interface QQHBTouchButton : NSObject
+- (void)sendActionsForControlEvents:(unsigned long)events;
+@end
 
 /* 红包卡片出现时：判断该不该抢，然后模拟点击「开」按钮 */
 static void QQHBAutoGrab(id view, id model) {
@@ -455,6 +527,13 @@ static void QQHBT_void_1(id self, SEL _cmd, id a1) {
 }
 
 static id QQHBT_id_1(id self, SEL _cmd, id a1) {
+    NSString *selName = NSStringFromSelector(_cmd);
+    if ([selName isEqualToString:@"initWithRedPacketInfo:"]) {
+        IMP o0 = QQHBOriginalFor(_cmd);
+        id r0 = o0 ? ((id (*)(id, SEL, id))o0)(self, _cmd, a1) : nil;
+        QQHBAutoGrabFromModel(r0 ?: self);
+        return r0;
+    }
     if (!QQHBBefore(self, _cmd, a1)) return nil;
     IMP o = QQHBOriginalFor(_cmd);
     id r = o ? ((id (*)(id, SEL, id))o)(self, _cmd, a1) : nil;
