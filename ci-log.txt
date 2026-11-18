@@ -1,0 +1,274 @@
+nstall -c redo_prebinding '/usr/local/bin/./aarch64-apple-darwin-redo_prebinding'
+libtool: install: /usr/bin/install -c redo_prebinding /usr/local/bin/./aarch64-apple-darwin-redo_prebinding
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c seg_addr_table '/usr/local/bin/./aarch64-apple-darwin-seg_addr_table'
+libtool: install: /usr/bin/install -c seg_addr_table /usr/local/bin/./aarch64-apple-darwin-seg_addr_table
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c seg_hack '/usr/local/bin/./aarch64-apple-darwin-seg_hack'
+libtool: install: /usr/bin/install -c seg_hack /usr/local/bin/./aarch64-apple-darwin-seg_hack
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c install_name_tool '/usr/local/bin/./aarch64-apple-darwin-install_name_tool'
+libtool: install: /usr/bin/install -c install_name_tool /usr/local/bin/./aarch64-apple-darwin-install_name_tool
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c strip '/usr/local/bin/./aarch64-apple-darwin-strip'
+libtool: install: /usr/bin/install -c strip /usr/local/bin/./aarch64-apple-darwin-strip
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c nmedit '/usr/local/bin/./aarch64-apple-darwin-nmedit'
+libtool: install: /usr/bin/install -c nmedit /usr/local/bin/./aarch64-apple-darwin-nmedit
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c segedit '/usr/local/bin/./aarch64-apple-darwin-segedit'
+libtool: install: /usr/bin/install -c segedit /usr/local/bin/./aarch64-apple-darwin-segedit
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c pagestuff '/usr/local/bin/./aarch64-apple-darwin-pagestuff'
+libtool: install: /usr/bin/install -c pagestuff /usr/local/bin/./aarch64-apple-darwin-pagestuff
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c ranlib '/usr/local/bin/./aarch64-apple-darwin-ranlib'
+libtool: install: /usr/bin/install -c ranlib /usr/local/bin/./aarch64-apple-darwin-ranlib
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c codesign_allocate '/usr/local/bin/./aarch64-apple-darwin-codesign_allocate'
+libtool: install: /usr/bin/install -c codesign_allocate /usr/local/bin/./aarch64-apple-darwin-codesign_allocate
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c bitcode_strip '/usr/local/bin/./aarch64-apple-darwin-bitcode_strip'
+libtool: install: /usr/bin/install -c bitcode_strip /usr/local/bin/./aarch64-apple-darwin-bitcode_strip
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c ctf_insert '/usr/local/bin/./aarch64-apple-darwin-ctf_insert'
+libtool: install: /usr/bin/install -c ctf_insert /usr/local/bin/./aarch64-apple-darwin-ctf_insert
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c check_dylib '/usr/local/bin/./aarch64-apple-darwin-check_dylib'
+libtool: install: /usr/bin/install -c check_dylib /usr/local/bin/./aarch64-apple-darwin-check_dylib
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c cmpdylib '/usr/local/bin/./aarch64-apple-darwin-cmpdylib'
+libtool: install: /usr/bin/install -c cmpdylib /usr/local/bin/./aarch64-apple-darwin-cmpdylib
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c inout '/usr/local/bin/./aarch64-apple-darwin-inout'
+libtool: install: /usr/bin/install -c inout /usr/local/bin/./aarch64-apple-darwin-inout
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c vtool '/usr/local/bin/./aarch64-apple-darwin-vtool'
+libtool: install: /usr/bin/install -c vtool /usr/local/bin/./aarch64-apple-darwin-vtool
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/tmp/ctp/cctools/misc'
+make[1]: Leaving directory '/tmp/ctp/cctools/misc'
+Making install in as
+make[1]: Entering directory '/tmp/ctp/cctools/as'
+make[2]: Entering directory '/tmp/ctp/cctools/as'
+ /usr/bin/mkdir -p '/usr/local/bin'
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c as '/usr/local/bin/./aarch64-apple-darwin-as'
+libtool: install: /usr/bin/install -c as /usr/local/bin/./aarch64-apple-darwin-as
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/tmp/ctp/cctools/as'
+make[1]: Leaving directory '/tmp/ctp/cctools/as'
+Making install in otool
+make[1]: Entering directory '/tmp/ctp/cctools/otool'
+make[2]: Entering directory '/tmp/ctp/cctools/otool'
+ /usr/bin/mkdir -p '/usr/local/bin'
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c otool '/usr/local/bin/./aarch64-apple-darwin-otool'
+libtool: install: /usr/bin/install -c otool /usr/local/bin/./aarch64-apple-darwin-otool
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/tmp/ctp/cctools/otool'
+make[1]: Leaving directory '/tmp/ctp/cctools/otool'
+Making install in efitools
+make[1]: Entering directory '/tmp/ctp/cctools/efitools'
+make[2]: Entering directory '/tmp/ctp/cctools/efitools'
+ /usr/bin/mkdir -p '/usr/local/bin'
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c makerelocs '/usr/local/bin/./aarch64-apple-darwin-makerelocs'
+libtool: install: /usr/bin/install -c makerelocs /usr/local/bin/./aarch64-apple-darwin-makerelocs
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c mtoc '/usr/local/bin/./aarch64-apple-darwin-mtoc'
+libtool: install: /usr/bin/install -c mtoc /usr/local/bin/./aarch64-apple-darwin-mtoc
+  /bin/bash ../libtool   --mode=install /usr/bin/install -c mtor '/usr/local/bin/./aarch64-apple-darwin-mtor'
+libtool: install: /usr/bin/install -c mtor /usr/local/bin/./aarch64-apple-darwin-mtor
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/tmp/ctp/cctools/efitools'
+make[1]: Leaving directory '/tmp/ctp/cctools/efitools'
+Making install in ld64
+make[1]: Entering directory '/tmp/ctp/cctools/ld64'
+Making install in src
+make[2]: Entering directory '/tmp/ctp/cctools/ld64/src'
+Making install in 3rd
+make[3]: Entering directory '/tmp/ctp/cctools/ld64/src/3rd'
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src/3rd'
+make[5]: Entering directory '/tmp/ctp/cctools/ld64/src/3rd'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/tmp/ctp/cctools/ld64/src/3rd'
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src/3rd'
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64/src/3rd'
+Making install in mach_o
+make[3]: Entering directory '/tmp/ctp/cctools/ld64/src/mach_o'
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src/mach_o'
+make[5]: Entering directory '/tmp/ctp/cctools/ld64/src/mach_o'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/tmp/ctp/cctools/ld64/src/mach_o'
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src/mach_o'
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64/src/mach_o'
+Making install in ld
+make[3]: Entering directory '/tmp/ctp/cctools/ld64/src/ld'
+Making install in parsers
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src/ld/parsers'
+make[5]: Entering directory '/tmp/ctp/cctools/ld64/src/ld/parsers'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld/parsers'
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld/parsers'
+Making install in passes
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src/ld/passes'
+make[5]: Entering directory '/tmp/ctp/cctools/ld64/src/ld/passes'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld/passes'
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld/passes'
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src/ld'
+make[5]: Entering directory '/tmp/ctp/cctools/ld64/src/ld'
+ /usr/bin/mkdir -p '/usr/local/bin'
+  /bin/bash ../../../libtool   --mode=install /usr/bin/install -c ld '/usr/local/bin/./aarch64-apple-darwin-ld'
+libtool: install: /usr/bin/install -c ld /usr/local/bin/./aarch64-apple-darwin-ld
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld'
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld'
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64/src/ld'
+Making install in other
+make[3]: Entering directory '/tmp/ctp/cctools/ld64/src/other'
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src/other'
+ /usr/bin/mkdir -p '/usr/local/bin'
+  /bin/bash ../../../libtool   --mode=install /usr/bin/install -c ObjectDump '/usr/local/bin/./aarch64-apple-darwin-ObjectDump'
+libtool: install: /usr/bin/install -c ObjectDump /usr/local/bin/./aarch64-apple-darwin-ObjectDump
+  /bin/bash ../../../libtool   --mode=install /usr/bin/install -c unwinddump '/usr/local/bin/./aarch64-apple-darwin-unwinddump'
+libtool: install: /usr/bin/install -c unwinddump /usr/local/bin/./aarch64-apple-darwin-unwinddump
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src/other'
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64/src/other'
+make[3]: Entering directory '/tmp/ctp/cctools/ld64/src'
+make[4]: Entering directory '/tmp/ctp/cctools/ld64/src'
+make[4]: Nothing to be done for 'install-exec-am'.
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/tmp/ctp/cctools/ld64/src'
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64/src'
+make[2]: Leaving directory '/tmp/ctp/cctools/ld64/src'
+Making install in doc/man
+make[2]: Entering directory '/tmp/ctp/cctools/ld64/doc/man'
+make[3]: Entering directory '/tmp/ctp/cctools/ld64/doc/man'
+make[3]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/usr/local/share/man/man1'
+ /usr/bin/install -c -m 644 'man1/ld64.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ld64.1'
+ /usr/bin/install -c -m 644 'man1/ld.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ld.1'
+ /usr/bin/install -c -m 644 'man1/ld-classic.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ld-classic.1'
+ /usr/bin/install -c -m 644 'man1/unwinddump.1' '/usr/local/share/man/man1/aarch64-apple-darwin-unwinddump.1'
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64/doc/man'
+make[2]: Leaving directory '/tmp/ctp/cctools/ld64/doc/man'
+make[2]: Entering directory '/tmp/ctp/cctools/ld64'
+make[3]: Entering directory '/tmp/ctp/cctools/ld64'
+make[3]: Nothing to be done for 'install-exec-am'.
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/tmp/ctp/cctools/ld64'
+make[2]: Leaving directory '/tmp/ctp/cctools/ld64'
+make[1]: Leaving directory '/tmp/ctp/cctools/ld64'
+Making install in man
+make[1]: Entering directory '/tmp/ctp/cctools/man'
+make[2]: Entering directory '/tmp/ctp/cctools/man'
+make[2]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/usr/local/share/man/man1'
+ /usr/bin/install -c -m 644 'dyld.1' '/usr/local/share/man/man1/aarch64-apple-darwin-dyld.1'
+ /usr/bin/install -c -m 644 'strings.1' '/usr/local/share/man/man1/aarch64-apple-darwin-strings.1'
+ /usr/bin/install -c -m 644 'lipo.1' '/usr/local/share/man/man1/aarch64-apple-darwin-lipo.1'
+ /usr/bin/install -c -m 644 'as.1' '/usr/local/share/man/man1/aarch64-apple-darwin-as.1'
+ /usr/bin/install -c -m 644 'nm.1' '/usr/local/share/man/man1/aarch64-apple-darwin-nm.1'
+ /usr/bin/install -c -m 644 'otool.1' '/usr/local/share/man/man1/aarch64-apple-darwin-otool.1'
+ /usr/bin/install -c -m 644 'ranlib.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ranlib.1'
+ /usr/bin/install -c -m 644 'segedit.1' '/usr/local/share/man/man1/aarch64-apple-darwin-segedit.1'
+ /usr/bin/install -c -m 644 'size.1' '/usr/local/share/man/man1/aarch64-apple-darwin-size.1'
+ /usr/bin/install -c -m 644 'strip.1' '/usr/local/share/man/man1/aarch64-apple-darwin-strip.1'
+ /usr/bin/install -c -m 644 'libtool.1' '/usr/local/share/man/man1/aarch64-apple-darwin-libtool.1'
+ /usr/bin/install -c -m 644 'cmpdylib.1' '/usr/local/share/man/man1/aarch64-apple-darwin-cmpdylib.1'
+ /usr/bin/install -c -m 644 'pagestuff.1' '/usr/local/share/man/man1/aarch64-apple-darwin-pagestuff.1'
+ /usr/bin/install -c -m 644 'redo_prebinding.1' '/usr/local/share/man/man1/aarch64-apple-darwin-redo_prebinding.1'
+ /usr/bin/install -c -m 644 'nmedit.1' '/usr/local/share/man/man1/aarch64-apple-darwin-nmedit.1'
+ /usr/bin/install -c -m 644 'install_name_tool.1' '/usr/local/share/man/man1/aarch64-apple-darwin-install_name_tool.1'
+ /usr/bin/install -c -m 644 'codesign_allocate.1' '/usr/local/share/man/man1/aarch64-apple-darwin-codesign_allocate.1'
+ /usr/bin/install -c -m 644 'ctf_insert.1' '/usr/local/share/man/man1/aarch64-apple-darwin-ctf_insert.1'
+ /usr/bin/install -c -m 644 'bitcode_strip.1' '/usr/local/share/man/man1/aarch64-apple-darwin-bitcode_strip.1'
+ /usr/bin/install -c -m 644 'llvm-otool.1' '/usr/local/share/man/man1/aarch64-apple-darwin-llvm-otool.1'
+ /usr/bin/install -c -m 644 'nm-classic.1' '/usr/local/share/man/man1/aarch64-apple-darwin-nm-classic.1'
+ /usr/bin/install -c -m 644 'size-classic.1' '/usr/local/share/man/man1/aarch64-apple-darwin-size-classic.1'
+ /usr/bin/install -c -m 644 'otool-classic.1' '/usr/local/share/man/man1/aarch64-apple-darwin-otool-classic.1'
+ /usr/bin/install -c -m 644 'indr.1' '/usr/local/share/man/man1/aarch64-apple-darwin-indr.1'
+ /usr/bin/install -c -m 644 'checksyms.1' '/usr/local/share/man/man1/aarch64-apple-darwin-checksyms.1'
+ /usr/bin/install -c -m 644 'seg_addr_table.1' '/usr/local/share/man/man1/aarch64-apple-darwin-seg_addr_table.1'
+ /usr/bin/install -c -m 644 'check_dylib.1' '/usr/local/share/man/man1/aarch64-apple-darwin-check_dylib.1'
+ /usr/bin/install -c -m 644 'mtoc.1' '/usr/local/share/man/man1/aarch64-apple-darwin-mtoc.1'
+ /usr/bin/mkdir -p '/usr/local/share/man/man3'
+ /usr/bin/install -c -m 644 'dyld.3' '/usr/local/share/man/man3/aarch64-apple-darwin-dyld.3'
+ /usr/bin/install -c -m 644 'NSModule.3' '/usr/local/share/man/man3/aarch64-apple-darwin-NSModule.3'
+ /usr/bin/install -c -m 644 'NSObjectFileImage.3' '/usr/local/share/man/man3/aarch64-apple-darwin-NSObjectFileImage.3'
+ /usr/bin/install -c -m 644 'dyld_debug.3' '/usr/local/share/man/man3/aarch64-apple-darwin-dyld_debug.3'
+ /usr/bin/install -c -m 644 'kld.3' '/usr/local/share/man/man3/aarch64-apple-darwin-kld.3'
+ /usr/bin/install -c -m 644 'arch.3' '/usr/local/share/man/man3/aarch64-apple-darwin-arch.3'
+ /usr/bin/install -c -m 644 'get_end.3' '/usr/local/share/man/man3/aarch64-apple-darwin-get_end.3'
+ /usr/bin/install -c -m 644 'end.3' '/usr/local/share/man/man3/aarch64-apple-darwin-end.3'
+ /usr/bin/install -c -m 644 'getsectbyname.3' '/usr/local/share/man/man3/aarch64-apple-darwin-getsectbyname.3'
+ /usr/bin/install -c -m 644 'getsectbynamefromheader.3' '/usr/local/share/man/man3/aarch64-apple-darwin-getsectbynamefromheader.3'
+ /usr/bin/install -c -m 644 'getsectdata.3' '/usr/local/share/man/man3/aarch64-apple-darwin-getsectdata.3'
+ /usr/bin/install -c -m 644 'getsectdatafromheader.3' '/usr/local/share/man/man3/aarch64-apple-darwin-getsectdatafromheader.3'
+ /usr/bin/install -c -m 644 'getsegbyname.3' '/usr/local/share/man/man3/aarch64-apple-darwin-getsegbyname.3'
+ /usr/bin/install -c -m 644 'NSObjectFileImage_priv.3' '/usr/local/share/man/man3/aarch64-apple-darwin-NSObjectFileImage_priv.3'
+ /usr/bin/install -c -m 644 'redo_prebinding.3' '/usr/local/share/man/man3/aarch64-apple-darwin-redo_prebinding.3'
+ /usr/bin/mkdir -p '/usr/local/share/man/man5'
+ /usr/bin/install -c -m 644 'Mach-O.5' '/usr/local/share/man/man5/aarch64-apple-darwin-Mach-O.5'
+ /usr/bin/install -c -m 644 'a.out.5' '/usr/local/share/man/man5/aarch64-apple-darwin-a.out.5'
+ /usr/bin/install -c -m 644 'ranlib.5' '/usr/local/share/man/man5/aarch64-apple-darwin-ranlib.5'
+ /usr/bin/install -c -m 644 'stab.5' '/usr/local/share/man/man5/aarch64-apple-darwin-stab.5'
+make[2]: Leaving directory '/tmp/ctp/cctools/man'
+make[1]: Leaving directory '/tmp/ctp/cctools/man'
+make[1]: Entering directory '/tmp/ctp/cctools'
+make[2]: Entering directory '/tmp/ctp/cctools'
+make[2]: Nothing to be done for 'install-exec-am'.
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/tmp/ctp/cctools'
+make[1]: Leaving directory '/tmp/ctp/cctools'
+total 873872
+-rw-r--r-- 1 root   root        4943 Oct 22 11:53 LICENSE.txt
+-rwxr-xr-x 1 root   root     1234576 Nov 18 05:09 aarch64-apple-darwin-ObjectDump
+-rwxr-xr-x 1 root   root       43472 Nov 18 05:09 aarch64-apple-darwin-ar
+-rwxr-xr-x 1 root   root       16360 Nov 18 05:09 aarch64-apple-darwin-as
+-rwxr-xr-x 1 root   root      207168 Nov 18 05:09 aarch64-apple-darwin-bitcode_strip
+-rwxr-xr-x 1 root   root      159832 Nov 18 05:09 aarch64-apple-darwin-check_dylib
+-rwxr-xr-x 1 root   root      164280 Nov 18 05:09 aarch64-apple-darwin-checksyms
+-rwxr-xr-x 1 root   root      164032 Nov 18 05:09 aarch64-apple-darwin-cmpdylib
+-rwxr-xr-x 1 root   root      198544 Nov 18 05:09 aarch64-apple-darwin-codesign_allocate
+-rwxr-xr-x 1 root   root      198312 Nov 18 05:09 aarch64-apple-darwin-ctf_insert
+-rwxr-xr-x 1 root   root      189752 Nov 18 05:09 aarch64-apple-darwin-inout
+-rwxr-xr-x 1 root   root      198464 Nov 18 05:09 aarch64-apple-darwin-install_name_tool
+-rwxr-xr-x 1 root   root     4740992 Nov 18 05:09 aarch64-apple-darwin-ld
+-rwxr-xr-x 1 root   root      204176 Nov 18 05:09 aarch64-apple-darwin-libtool
+-rwxr-xr-x 1 root   root      102424 Nov 18 05:09 aarch64-apple-darwin-lipo
+-rwxr-xr-x 1 root   root      168744 Nov 18 05:09 aarch64-apple-darwin-makerelocs
+-rwxr-xr-x 1 root   root      195768 Nov 18 05:09 aarch64-apple-darwin-mtoc
+-rwxr-xr-x 1 root   root      177232 Nov 18 05:09 aarch64-apple-darwin-mtor
+-rwxr-xr-x 1 root   root      178616 Nov 18 05:09 aarch64-apple-darwin-nm
+-rwxr-xr-x 1 root   root      216768 Nov 18 05:09 aarch64-apple-darwin-nmedit
+-rwxr-xr-x 1 root   root      648128 Nov 18 05:09 aarch64-apple-darwin-otool
+-rwxr-xr-x 1 root   root      172816 Nov 18 05:09 aarch64-apple-darwin-pagestuff
+-rwxr-xr-x 1 root   root      204112 Nov 18 05:09 aarch64-apple-darwin-ranlib
+-rwxr-xr-x 1 root   root      251656 Nov 18 05:09 aarch64-apple-darwin-redo_prebinding
+-rwxr-xr-x 1 root   root      194568 Nov 18 05:09 aarch64-apple-darwin-seg_addr_table
+-rwxr-xr-x 1 root   root      181568 Nov 18 05:09 aarch64-apple-darwin-seg_hack
+-rwxr-xr-x 1 root   root       65784 Nov 18 05:09 aarch64-apple-darwin-segedit
+-rwxr-xr-x 1 root   root      159728 Nov 18 05:09 aarch64-apple-darwin-size
+-rwxr-xr-x 1 root   root      156208 Nov 18 05:09 aarch64-apple-darwin-strings
+synced to: 8cca990
+package version: 0.1.261118050945
+source commit: 8cca990
+mode: undefined dynamic lookup (no framework at link time)
+SYSROOT=/tmp/sdks/iPhoneOS16.5.sdk
+frameworks:
+ARKit.framework
+AVFAudio.framework
+AVFoundation.framework
+AVKit.framework
+AVRouting.framework
+Accelerate.framework
+Accessibility.framework
+Accounts.framework
+Foundation.tbd
+Headers
+Modules
++ clang -target arm64-apple-ios16.0 -isysroot /tmp/sdks/iPhoneOS16.5.sdk --ld-path=/usr/local/bin/aarch64-apple-darwin-ld -Wl,-undefined,dynamic_lookup -fobjc-arc -Os -Wall -Wno-unused-parameter -fvisibility=hidden -I Sources -DAPELIN_BUILD_ID="\"8cca990a\"" -DQQHB_GIT_REV="\"8cca990\"" -DQQHB_SUBSYSTEM="\"com.yg.qqhongbao\"" -DAPELIN_BOOTSTRAP_ROOTHIDE=1 Sources/QQHB.m Sources/QQHBConfig.m Sources/QQHBStats.m
+Sources/QQHB.m:269:13: warning: unused function 'QQHBDumpAllValues' [-Wunused-function]
+  269 | static void QQHBDumpAllValues(const char *tag, id obj) {
+      |             ^~~~~~~~~~~~~~~~~
+Sources/QQHB.m:688:13: warning: unused function 'QQHBDiagnoseScan' [-Wunused-function]
+  688 | static void QQHBDiagnoseScan(void) {
+      |             ^~~~~~~~~~~~~~~~
+Sources/QQHB.m:857:13: warning: unused function 'QQHBInstallNotificationHooks' [-Wunused-function]
+  857 | static void QQHBInstallNotificationHooks(void) {
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sources/QQHB.m:874:13: warning: unused function 'QQHBInstallTraceHooks' [-Wunused-function]
+  874 | static void QQHBInstallTraceHooks(void) {
+      |             ^~~~~~~~~~~~~~~~~~~~~
+4 warnings generated.
+ld: framework not found Foundation
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
