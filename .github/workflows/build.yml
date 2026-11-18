@@ -66,6 +66,7 @@ jobs:
             echo "llvm-config: $LLVMCONFIG"
             CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
               ./configure --prefix=/usr/local --target=aarch64-apple-darwin \
+                --enable-tapi-support \
                 --with-llvm-config="$LLVMCONFIG"
             make -j"$(nproc)"
             sudo make install

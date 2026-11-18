@@ -32,13 +32,21 @@ COMMON="$COMMON -DQQHB_SUBSYSTEM=\"\\\"$PACKAGE\\\"\""
 
 mkdir -p "${APELIN_PACKAGE_DIR:?}"
 
+echo "SYSROOT=$SYSROOT"
+if [ -n "$SYSROOT" ]; then
+    echo "frameworks:"; ls "$SYSROOT/System/Library/Frameworks" 2>/dev/null | head -8
+    ls "$SYSROOT/System/Library/Frameworks/Foundation.framework" 2>/dev/null | head -8
+fi
+
 run_clang() {
     arch="$1"; out="$2"; shift 2
     if [ -n "$SYSROOT" ]; then
+        echo "+ clang -target $arch-apple-ios16.0 -isysroot $SYSROOT $LD_FLAGS -F$SYSROOT/System/Library/Frameworks $*"
         clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
             -F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib" \
             "$@" -dynamiclib -framework Foundation -o "$out"
     else
+        echo "+ clang -target $arch-apple-ios16.0 $LD_FLAGS $*"
         clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" \
             -dynamiclib -framework Foundation -o "$out"
     fi
