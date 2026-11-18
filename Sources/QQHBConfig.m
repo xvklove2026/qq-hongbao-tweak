@@ -133,6 +133,12 @@ static NSDictionary *QQHBDefaultConfig(void) {
               @"selector": @"onGrabFinish:errorCode:"},
             @{@"class": @"QQWalletRedPacketMsgView",
               @"selector": @"updateViewWithRedPacketMsgModel:",
+              @"observe": @YES},
+            @{@"class": @"QQWalletRedPacketMsgModel",
+              @"selector": @"initWithRedPacketInfo:",
+              @"observe": @YES},
+            @{@"class": @"QQWalletRedPackManager",
+              @"selector": @"addRedPackToDict:redPack:",
               @"observe": @YES}
         ];
     }

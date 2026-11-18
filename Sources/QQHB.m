@@ -253,7 +253,30 @@ static void QQHBAppendText(NSString *file, NSString *line) {
 
 static NSMutableSet<NSString *> *gDumpedClasses;
 
-/* 打印若干字段的实际值，用来确定字段含义 */
+/* 打印对象所有属性的值（观察型钩子用） */
+static void QQHBDumpAllValues(const char *tag, id obj) {
+    if (!obj) return;
+    Class cls = object_getClass(obj);
+    unsigned int pcount = 0;
+    objc_property_t *plist = class_copyPropertyList(cls, &pcount);
+    if (!plist) return;
+    NSMutableArray *parts = [NSMutableArray array];
+    for (unsigned int i = 0; i < pcount && parts.count < 60; i++) {
+        NSString *key = [NSString stringWithUTF8String:property_getName(plist[i])];
+        id v = nil;
+        @try { v = [obj valueForKey:key]; } @catch (__unused NSException *e) {}
+        NSString *s = QQHBStringOf(v);
+        if (!s || s.length == 0) continue;
+        if (s.length > 120) s = [s substringToIndex:120];
+        [parts addObject:[NSString stringWithFormat:@"%@=%@", key, s]];
+    }
+    free(plist);
+    if (parts.count == 0) return;
+    NSString *line = [NSString stringWithFormat:@"%s 全部: %@", tag,
+                      [parts componentsJoinedByString:@" | "]];
+    QQHBLog(@"%@", line);
+    QQHBAppendText(@"structure.txt", line);
+}
 static void QQHBDumpValues(const char *tag, id obj, NSArray<NSString *> *keys) {
     if (!obj) return;
     NSMutableArray *parts = [NSMutableArray array];
@@ -311,8 +334,7 @@ static BOOL QQHBBefore(id target, SEL sel, id arg) {
     if ([cfg isObserveSelector:sel]) {
         if (cfg.diagnose) {
             QQHBDumpObject("observe", arg);
-            QQHBDumpValues("observe", arg, @[@"title", @"wishing", @"message", @"senderName",
-                                             @"senderUin", @"redPacketType", @"type"]);
+            QQHBDumpAllValues("observe", arg);
         }
         return YES;
     }
