@@ -26,7 +26,7 @@ trap 'rm -rf -- "${stage:?}" "${work:?}"' EXIT
 cd "${APELIN_PROJECT_ROOT:?}"
 
 SOURCES="Sources/QQHB.m Sources/QQHBConfig.m Sources/QQHBStats.m"
-COMMON="-fobjc-arc -Os -Wall -Wno-unused-parameter -fvisibility=hidden -fmodules -I Sources"
+COMMON="-fobjc-arc -Os -Wall -Wno-unused-parameter -fvisibility=hidden -fmodules -fno-autolink -I Sources"
 COMMON="$COMMON -DAPELIN_BUILD_ID=\"\\\"$APELIN_BUILD_ID\\\"\""
 COMMON="$COMMON -DQQHB_SUBSYSTEM=\"\\\"$PACKAGE\\\"\""
 
