@@ -58,6 +58,20 @@ libdispatch 依赖处理掉。
 grab/open/receive 候选方法与类型编码打进日志，看到日志后再把它们填进
 `config.json` 的 `grabHooks`，引擎才真正开始拦截和抢包。
 
+## 当前状态（2026-11-18 12:00）
+- 能装、能注入（fat dylib 必须）、能生成 config.json。
+- **手动点开红包时可以记录**：发送者昵称、QQ 号、时间（`stats.txt`），金额还没接上。
+- 自动抢**未成功**（QQ 9.3.80）：
+  - `QQWallet -grabHB:params:completion:` / `grabRedPack:params:completion:` 是点击后的底层接口，
+    自动调用返回 `user cancel`。
+  - 卡片类 `QQWalletRedPacketMsgView`（及 Specify/Festival 子类）的
+    `updateViewWithRedPacketMsgModel:` / `setRedPacketMsgModel:` 能钩到（模型是
+    `QQWalletNTRedPackMsgModel`），但 `openButton` 的 `sendActionsForControlEvents:` 和
+    `tailButtonClicked:` 都不会真正触发抢包。
+  - 直接调 `grabHB` 兜底时拿不到 params（模型的 `grabHBParam` 没返回可用值）。
+- 结论：要全自动，需要对 QQ 做动态追踪（frida 类工具）抓「用户点开红包」那一刻的方法调用链，
+  或者构造 AIOData 走 `QQWalletGrapHBService -grapHBProcess:...`。
+
 ## 踩过的坑（roothide 注入）
 - 瘦 `arm64e` 的 dylib（`cffaedfe`，cpusubtype 0x80000002）ElleKit **不会加载**，
   日志里连错误都没有。可加载的 tweak（QQRecallGuard、QQNotiAvatar）都是
