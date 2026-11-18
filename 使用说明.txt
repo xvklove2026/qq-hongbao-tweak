@@ -1,0 +1,195 @@
+QQ 抢红包 —— 使用与配合说明
+================================
+
+写给你的完整说明。没有 Mac 也能做，下面按「你现在能选的路线」排。
+
+一、目前是什么状态
+------------------
+1. 代码已经写完：拦截引擎、专属红包过滤、关键词黑名单、抢包记录、诊断模式、
+   配置读写，全在工程里，CI 上编译能过（只剩 1 个警告）。
+2. 你的 iPhone X（iPhone10,3，iOS 16.7.16）**永远编不了**：Apelin 列出的每个
+   Command Line Tools 都要求 CPU 有 FEAT_LRCPC，A11 没有这颗特性。
+   这不是设置问题，换什么参数都不行。
+3. GitHub 仓库已经建好并推上去了：
+   https://github.com/xvklove2026/qq-hongbao-tweak
+   CI 已经能装依赖、编 ldid、编 libdispatch、编 cctools 的 ld64、拉 iPhoneOS 16.5
+   SDK，卡在最后一步链接：`ld: framework not found Foundation`。
+4. 所以：**目前还没有能装的 deb**。下面第 3～5 节是「包做出来之后怎么用」，
+   第 2 节是「怎么把包弄出来」。
+
+
+二、把包弄出来的三条路（都没 Mac 也行）
+--------------------------------------
+路线 A：我继续在 GitHub CI 上修（推荐，你什么都不用做）
+  - 剩下的问题是链接器的 framework 搜索路径，属于我这边改脚本的事。
+  - 你只需要告诉我你的 QQ 版本号（QQ → 设置 → 关于QQ），因为 hook 点要按版本定。
+  - 每次我改完推上去，GitHub 会自动重跑，我自己能读日志。
+
+路线 B：另找一台越狱手机（A13 及以上，iOS 16+），用 Apelin 直接编
+  - 这是最舒服的一条：在 Apelin 里装工具链 → 构建 → 安装 → 看日志 → 定 hook 点，
+    一条龙。你的 iPhone X 不行就是因为 CPU 太老。
+  - 如果你手上有 iPhone 11/12/13 之类能越狱的机器，值得试。
+
+路线 C：Windows / Linux 电脑自己编（WSL 或 Docker 都行）
+  这就是 CI 现在跑的那套命令，照抄即可。前提是电脑能装 WSL2（Win10/11 均可）。
+
+  C-1 装 WSL2（Windows 里，管理员 PowerShell）：
+      wsl --install -d Ubuntu
+      装完进 Ubuntu，后面都在 Ubuntu 里敲。
+
+  C-2 装依赖：
+      sudo apt update
+      sudo apt install -y clang llvm lld libplist-dev libssl-dev zlib1g-dev \
+        libxml2-dev flex bison texinfo dpkg-dev cmake libblocksruntime-dev \
+        libbsd-dev libnuma-dev git make
+
+  C-3 编 ldid（给 dylib 签名）：
+      git clone --depth 1 https://github.com/ProcursusTeam/ldid.git
+      make -C ldid -j$(nproc)
+      sudo install -m755 ldid/ldid /usr/local/bin/ldid
+
+  C-4 编 libdispatch（cctools 的链接器要它）：
+      git clone --depth 1 https://github.com/swiftlang/swift-corelibs-libdispatch.git
+      cmake -S swift-corelibs-libdispatch -B /tmp/dispatch-build \
+        -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+        -DINSTALL_PRIVATE_HEADERS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
+      cmake --build /tmp/dispatch-build -j$(nproc)
+      sudo cmake --install /tmp/dispatch-build
+      sudo ldconfig
+
+  C-5 编 ld64（真正的 Apple 链接器移植版）：
+      git clone --depth 1 https://github.com/tpoechtrager/cctools-port.git
+      cd cctools-port/cctools
+      CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
+        ./configure --prefix=/usr/local --target=aarch64-apple-darwin \
+        --with-llvm-config=$(command -v llvm-config)
+      make -j$(nproc)
+      sudo make install
+      cd -
+      装好后叫 /usr/local/bin/aarch64-apple-darwin-ld（名字带前缀，别写成 ld64）
+
+  C-6 拉 iPhoneOS SDK（只要 16.5 那一个，别整仓库下，很大）：
+      git clone --depth 1 --filter=blob:none --sparse \
+        https://github.com/theos/sdks.git /opt/sdks
+      cd /opt/sdks && git sparse-checkout set iPhoneOS16.5.sdk && cd -
+
+  C-7 拉工程并按你的越狱类型编译：
+      git clone https://github.com/xvklove2026/qq-hongbao-tweak.git
+      cd qq-hongbao-tweak
+
+      export SDKROOT=/opt/sdks/iPhoneOS16.5.sdk
+      export APELIN_PROJECT_ROOT="$PWD"
+      export APELIN_BOOTSTRAP=roothide          # rootless 越狱就写 rootless
+      export APELIN_ARCHITECTURE=iphoneos-arm64e # rootless 写 iphoneos-arm64
+      export APELIN_PREFIX=                     # rootless 写 /var/jb
+      export APELIN_BUILD_ID=local
+      export APELIN_PACKAGE_DIR="$PWD/out"
+      export APELIN_LD_FLAGS="--ld-path=$(ls /usr/local/bin/*-ld | head -1)"
+      export TMPDIR="$(mktemp -d)"
+      chmod +x apelin/build.sh
+      ./apelin/build.sh
+
+      成功的话 out/ 里会出现 com.yg.qqhongbao_0.1.0_iphoneos-arm64e.deb。
+      报错就把最后 30 行贴给我，我改脚本。
+
+      ⚠ 说明：这条路和 CI 是同一套脚本，CI 现在卡在 Foundation 那步，
+      你在本地跑也会卡在同一步 —— 区别是本地能直接把错误贴在对话里。
+      真要自己走通，通常是先需要我把 build.sh 的 framework 路径修对。
+
+
+三、装包（拿到 deb 之后）
+------------------------
+1. roothide 越狱装 roothide 包，rootless（Dopamine 等）装 rootless 包，不能混。
+2. 用 Sileo 打开 deb 安装，或 Filza → 点 deb → 安装。
+3. Apelin 自己装的包只能用 Apelin 构建产物，外部 deb 请用上面的方式装。
+4. 装完最好重启一下 QQ（不需要重启手机）。
+
+
+四、配置与使用
+--------------
+配置在 QQ 的沙盒里，第一次启动 QQ 时自动生成：
+
+  /var/mobile/Containers/Data/Application/<一串UUID>/Library/Application Support/QQHongbao/config.json
+
+找 UUID 的最快方法：Filza 里搜索 QQHongbao，或者搜 config.json。
+改完后不必重启 QQ，下次抢包前会重新读。
+
+字段：
+
+  enabled            总开关
+  diagnose           诊断模式，默认 true。只把疑似红包的类和方法写进日志，不抢
+  grabOwnPackets     自己发的红包也抢，默认 true
+  skipExclusive      专属红包不抢，默认 true
+  skipTitleKeywords  标题/祝福语含这些词就不抢，默认 ["专属","测试"]，你自己加
+  grabKeywords       非空时，标题必须命中其中之一才抢（白名单，优先级高于黑名单）
+  delayMs/delayMaxMs 抢之前随机延迟毫秒，例如 0/300 表示 0～300ms 随机
+  selfUin            你自己的 QQ 号，用来识别自己发的包
+  exclusiveTypes     这些数字类型值视为专属红包（默认空，看日志再填）
+  grabHooks          真正生效的抢包方法，格式 [{"class":"...","selector":"..."}]
+
+记录文件（同目录）：
+
+  stats.json   完整记录，最多 2000 条，最新在最后
+  stats.txt    一行一条的账本：时间 昵称 QQ号 金额 标题
+  skips.txt    每次跳过的原因，超过 256KB 自动清空
+
+抢到的记录字段：time（时间）、senderUin（发送者QQ）、senderName（昵称）、
+amount（金额，元）、amountCents（金额，分）、title（标题）、extra（来自哪个类/方法）。
+
+
+五、怎么和我配合（关键）
+------------------------
+第一次装好后，按这个流程走，我才能把 hook 点定下来：
+
+第 1 步：确认加载成功
+  打开 QQ，然后告诉我一声。我这边能读系统日志（subsystem com.yg.qqhongbao），
+  看到 `ApelinLoaded xxxxxxxx` 就说明注入成功。你也可以在 Apelin 里让我去读。
+
+第 2 步：跑诊断
+  保持 diagnose: true，正常用 QQ，进有红包的群，等一个红包出现（不抢也行），
+  然后告诉我「有红包了」。我把日志读出来，里面会是这样：
+
+    [诊断] 类 QQWalletRedPackXXX 候选方法:
+           grabRedPack: v24@0:8@16 | openRedPacket: v28@0:8@16@24 | ...
+
+  我要的就是这些「类名 + 方法名 + 类型编码」。
+
+第 3 步：填 grabHooks
+  我把上面挑出来的几条写进你的 config.json 的 grabHooks，并把 diagnose 改成
+  false，然后你再试抢。抢到了 stats.txt 里会多一行。
+
+第 4 步：告诉我现象
+  抢到 / 没抢到 / 抢错（比如把专属抢了）/ 闪退，哪一种，越具体越好：
+  - 「群里发了一个普通红包，没抢」
+  - 「专属的红包被抢了」
+  - 「QQ 直接闪退」
+  闪退的话我这边能读崩溃报告，你只要说一声「刚才闪退了」。
+
+需要你提供的三样东西（就这三样）：
+  1. QQ 版本号（设置 → 关于QQ）
+  2. 每次出问题的大概时间点，方便我在日志里对时间
+  3. 现象描述
+
+不用提供：账号密码、聊天内容、截图（除非你自己想给）。
+
+
+六、常见问题
+------------
+Q: 为什么本机编不了？
+A: 工具链要 FEAT_LRCPC，A11 没有。这是硬件限制，不是配置问题。
+
+Q: 装了没反应？
+A: 先确认注入成功（日志里有 ApelinLoaded）；再确认 grabHooks 不是空的。
+   空着的时候诊断模式只记录不抢，这是设计如此，不是 bug。
+
+Q: 会不会把专属红包也抢了？
+A: 默认跳过：靠专属标志位、专属类型值、以及标题里的「专属」三种方式判断。
+   如果 QQ 用的是别的字段，你把被抢的那次现象告诉我，我把字段补上。
+
+Q: QQ 更新后失效？
+A: 很可能。类名/方法名变了，重新跑一遍诊断，把新的 grabHooks 填进去即可。
+
+Q: 会不会有风险？
+A: 这是自用的自动化工具，抢的是群里本来谁都能抢的红包，但确实会抢在别人前面。
+   行为异常时最坏情况是 QQ 崩溃，卸载 deb 即可恢复。
