@@ -334,6 +334,30 @@ static void QQHBDumpObject(const char *tag, id obj) {
                       [props componentsJoinedByString:@","], desc ?: @"(nil)"];
     QQHBLog(@"%@", line);
     QQHBAppendText(@"structure.txt", line);
+
+    /* ivar 里往往藏着 reserve data / 单号 */
+    unsigned int icount = 0;
+    Ivar *ivars = class_copyIvarList(cls, &icount);
+    if (ivars) {
+        NSMutableArray *items = [NSMutableArray array];
+        for (unsigned int i = 0; i < icount && items.count < 40; i++) {
+            const char *name = ivar_getName(ivars[i]);
+            const char *type = ivar_getTypeEncoding(ivars[i]);
+            NSString *val = @"";
+            if (type && type[0] == '@') {
+                id v = object_getIvar(obj, ivars[i]);
+                NSString *s = QQHBStringOf(v);
+                if (s.length) {
+                    if (s.length > 200) s = [s substringToIndex:200];
+                    val = [NSString stringWithFormat:@"=%@", s];
+                }
+            }
+            [items addObject:[NSString stringWithFormat:@"%s%s", name ?: "?", val.UTF8String]];
+        }
+        free(ivars);
+        QQHBAppendText(@"structure.txt", [NSString stringWithFormat:@"%s ivar: %@", tag,
+                                          [items componentsJoinedByString:@" | "]]);
+    }
 }
 
 /* 返回 YES 表示允许原方法继续（即真的去抢） */
