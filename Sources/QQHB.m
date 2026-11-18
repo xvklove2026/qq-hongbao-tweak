@@ -352,6 +352,8 @@ static void QQHBDumpObjectImpl(const char *tag, id obj) {
     }
 }
 
+static void QQHBDumpDict(const char *tag, id obj);
+
 static void QQHBDumpObject(const char *tag, id obj) {
     @try {
         QQHBDumpObjectImpl(tag, obj);
