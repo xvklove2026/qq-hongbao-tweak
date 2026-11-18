@@ -32,6 +32,15 @@ COMMON="$COMMON -DQQHB_SUBSYSTEM=\"\\\"$PACKAGE\\\"\""
 
 mkdir -p "${APELIN_PACKAGE_DIR:?}"
 
+# .tbd 需要 ld64 的 TAPI 支持；自编的 ld64 没有时改用动态查找
+LINK_EXTRA=""
+FRAMEWORKS="-framework Foundation"
+if [ "${APELIN_UNDEFINED_LOOKUP:-0}" = "1" ]; then
+    LINK_EXTRA="-Wl,-undefined,dynamic_lookup"
+    FRAMEWORKS=""
+    echo "mode: undefined dynamic lookup (no framework at link time)"
+fi
+
 echo "SYSROOT=$SYSROOT"
 if [ -n "$SYSROOT" ]; then
     echo "frameworks:"; ls "$SYSROOT/System/Library/Frameworks" 2>/dev/null | head -8
@@ -41,14 +50,14 @@ fi
 run_clang() {
     arch="$1"; out="$2"; shift 2
     if [ -n "$SYSROOT" ]; then
-        echo "+ clang -target $arch-apple-ios16.0 -isysroot $SYSROOT $LD_FLAGS -F$SYSROOT/System/Library/Frameworks $*"
+        echo "+ clang -target $arch-apple-ios16.0 -isysroot $SYSROOT $LD_FLAGS $LINK_EXTRA $*"
         clang -target "$arch-apple-ios16.0" -isysroot "$SYSROOT" $LD_FLAGS \
             -F"$SYSROOT/System/Library/Frameworks" -L"$SYSROOT/usr/lib" \
-            "$@" -dynamiclib -framework Foundation -o "$out"
+            "$@" $LINK_EXTRA -dynamiclib $FRAMEWORKS -o "$out"
     else
-        echo "+ clang -target $arch-apple-ios16.0 $LD_FLAGS $*"
-        clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" \
-            -dynamiclib -framework Foundation -o "$out"
+        echo "+ clang -target $arch-apple-ios16.0 $LD_FLAGS $LINK_EXTRA $*"
+        clang -target "$arch-apple-ios16.0" $LD_FLAGS "$@" $LINK_EXTRA \
+            -dynamiclib $FRAMEWORKS -o "$out"
     fi
 }
 
